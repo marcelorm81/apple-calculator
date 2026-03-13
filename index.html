@@ -3,9 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Calculator</title>
+  <title>The Chronos Calculator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;900&family=IM+Fell+English:ital@0;1&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
   <style>
-    * {
+    *, *::before, *::after {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
@@ -13,143 +15,524 @@
       user-select: none;
     }
 
-    body {
-      background: #1c1c1e;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", sans-serif;
+    :root {
+      --parchment:    #f2e8d0;
+      --parchment-dk: #e0ceaa;
+      --ink:          #1a0f00;
+      --ink-faded:    #3d2b0e;
+      --rust:         #8b2500;
+      --gold:         #c8922a;
+      --gold-lt:      #e8b84b;
+      --aged-paper:   #d4b896;
+      --black-press:  #0d0700;
+      --vellum:       #f7f0e0;
     }
 
-    .calculator {
-      background: #000;
-      border-radius: 54px;
-      width: 428px;
-      padding: 0 17px 17px;
-      box-shadow:
-        0 0 0 1px rgba(255,255,255,0.08),
-        0 40px 80px rgba(0,0,0,0.8),
-        0 20px 40px rgba(0,0,0,0.5);
-      overflow: hidden;
+    @keyframes flicker {
+      0%,100% { opacity:1; }
+      92%      { opacity:1; }
+      93%      { opacity:.85; }
+      95%      { opacity:1; }
+      97%      { opacity:.9; }
     }
 
-    /* Display */
-    .display {
-      padding: 120px 14px 24px;
-      text-align: right;
-      min-height: 240px;
-      display: flex;
-      flex-direction: column;
-      justify-content: flex-end;
-      align-items: flex-end;
+    @keyframes dustFloat {
+      0%   { transform:translateY(0) translateX(0) rotate(0deg); opacity:.4; }
+      50%  { transform:translateY(-22px) translateX(8px) rotate(180deg); opacity:.7; }
+      100% { transform:translateY(-44px) translateX(-4px) rotate(360deg); opacity:0; }
     }
 
-    .expression {
-      font-size: 22px;
-      color: rgba(255,255,255,0.45);
-      font-weight: 300;
-      min-height: 28px;
-      margin-bottom: 4px;
-      letter-spacing: -0.3px;
-      transition: opacity 0.15s;
+    @keyframes revealFact {
+      0%   { opacity:0; clip-path:inset(0 100% 0 0); }
+      100% { opacity:1; clip-path:inset(0 0% 0 0); }
     }
 
-    .result {
-      font-size: 90px;
-      font-weight: 300;
-      color: #fff;
-      line-height: 1;
-      letter-spacing: -3px;
-      transition: font-size 0.12s ease;
-      word-break: break-all;
+    @keyframes stampIn {
+      0%   { transform:scale(2.4) rotate(-6deg); opacity:0; }
+      60%  { transform:scale(0.95) rotate(1deg); opacity:1; }
+      100% { transform:scale(1) rotate(0deg); opacity:1; }
     }
 
-    .result.shrink-2 { font-size: 72px; letter-spacing: -2px; }
-    .result.shrink-3 { font-size: 56px; letter-spacing: -1px; }
-    .result.shrink-4 { font-size: 44px; letter-spacing: -0.5px; }
-    .result.shrink-5 { font-size: 36px; letter-spacing: 0; }
-
-    /* Button grid */
-    .buttons {
-      display: grid;
-      grid-template-columns: repeat(4, 88px);
-      grid-template-rows: repeat(5, 88px);
-      gap: 14px;
+    @keyframes quill {
+      0%,100% { transform:rotate(-5deg) translateY(0); }
+      50%     { transform:rotate(5deg) translateY(-3px); }
     }
 
-    .btn {
-      border: none;
-      cursor: pointer;
-      border-radius: 50%;
-      font-family: inherit;
-      font-size: 40px;
-      font-weight: 400;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: filter 0.08s ease, transform 0.08s ease;
-      position: relative;
-      overflow: hidden;
-      outline: none;
-      -webkit-font-smoothing: antialiased;
-    }
-
-    .btn:active {
-      filter: brightness(1.35);
-      transform: scale(0.94);
-    }
-
-    /* Number buttons */
-    .btn-num {
-      background: #333;
-      color: #fff;
-    }
-
-    /* Function buttons (AC, +/-, %) */
-    .btn-func {
-      background: #a5a5a5;
-      color: #000;
-    }
-
-    /* Operator buttons */
-    .btn-op {
-      background: #f1a33b;
-      color: #fff;
-    }
-
-    /* Active operator (when selected) */
-    .btn-op.active {
-      background: #fff;
-      color: #f1a33b;
-    }
-
-    /* 0 button — pill shape spanning 2 columns */
-    .btn-zero {
-      grid-column: span 2;
-      border-radius: 44px;
-      justify-content: flex-start;
-      padding-left: 35px;
-      font-size: 40px;
-    }
-
-    /* Operator symbols */
-    .btn[data-op="divide"] { font-size: 46px; }
-    .btn[data-op="multiply"] { font-size: 36px; }
-    .btn[data-op="minus"] { font-size: 48px; line-height: 0.8; }
-    .btn[data-op="plus"] { font-size: 48px; }
-    .btn[data-op="equals"] { font-size: 48px; }
-
-    /* Decimal comma */
-    .btn-decimal { font-size: 44px; font-weight: 700; }
-
-    /* Shimmer gradient animation */
     @keyframes shimmer {
       0%   { background-position: 200% 200%; }
       50%  { background-position: -50% -50%; }
       100% { background-position: 200% 200%; }
     }
 
+    @keyframes scanline {
+      0%   { top: -10%; }
+      100% { top: 110%; }
+    }
+
+    body {
+      /* Museum wall — dark warm charcoal, clearly distinct from the gold frame */
+      background: #16120e;
+      background-image:
+        /* Warm reflected glow from the gilded frame on the wall */
+        radial-gradient(ellipse 75% 80% at 50% 50%, rgba(110,65,8,0.28) 0%, transparent 60%),
+        radial-gradient(ellipse at 30% 20%, rgba(90,40,0,0.30) 0%, transparent 55%),
+        radial-gradient(ellipse at 75% 80%, rgba(60,25,0,0.25) 0%, transparent 50%),
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='400' height='400' filter='url(%23n)' opacity='0.07'/%3E%3C/svg%3E");
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 30px 24px;
+      font-family: 'Playfair Display', 'IM Fell English', Georgia, serif;
+      overflow-y: auto;
+      position: relative;
+    }
+
+    /* Floating dust particles */
+    .dust {
+      position: fixed;
+      width: 3px; height: 3px;
+      border-radius: 50%;
+      background: rgba(200,146,42,0.5);
+      pointer-events: none;
+      z-index: 0;
+      animation: dustFloat linear infinite;
+    }
+
+    /* === REALISTIC GILDED MUSEUM ART FRAME ===
+       Cross-section (outer → inner, each side ~76px):
+       4px back-edge │ 18px outer bevel ▲ │ ~34px flat ogee face │ 14px inner cove ▼ │ 6px gold lip │
+    */
+    .frame {
+      position: relative;
+      z-index: 2;
+      padding: 76px;
+      /* Scale down gracefully on narrow viewports */
+      max-width: min(760px, calc(100vw - 20px));
+
+      /* Gold leaf body — rich, luminous, multi-zone tonal variation */
+      background:
+        /* Fine diagonal hatch: the carved gesso wood grain showing through gold leaf */
+        repeating-linear-gradient(
+          -48deg,
+          transparent 0, transparent 4px,
+          rgba(255,225,80,0.07) 4px, rgba(255,225,80,0.07) 5px
+        ),
+        /* Main gold gradient: bold light-to-shadow across the moulding body */
+        linear-gradient(145deg,
+          #fce07c 0%,    /* TL bright outer corner */
+          #d49a2c 6%,    /* warm gold */
+          #8a5010 16%,   /* deep shadow valley */
+          #e0a832 26%,   /* raised flat face — illuminated */
+          #b88020 40%,   /* mid-tone body */
+          #f0c048 52%,   /* central catchlight on flat face */
+          #9a6218 62%,   /* shadow dip */
+          #d09030 74%,   /* recovery toward BR */
+          #f0c450 86%,   /* warm bright near BR */
+          #8a5010 100%   /* dark BR back corner */
+        );
+
+      /* Cast shadow + dark back-edge + warm wall glow */
+      box-shadow:
+        0 0 0 4px #090300,                       /* raw back-edge of the frame */
+        0 0 0 5px rgba(180,120,20,0.12),         /* faint gold ambient rim */
+        0 60px 130px rgba(0,0,0,0.96),           /* deep floor shadow */
+        0 28px 75px  rgba(0,0,0,0.88),
+        22px 28px 85px rgba(0,0,0,0.82),
+        -6px -6px 40px rgba(0,0,0,0.45),
+        0 0 130px rgba(170,105,12,0.22);         /* warm gold glow on the wall */
+    }
+
+    /* Directional bevel lighting + inner cove shadow */
+    .frame::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 1;
+      background:
+        /* Corner specular catchlights */
+        radial-gradient(ellipse 62% 62% at 1.5% 1.5%,
+          rgba(255,252,200,0.60) 0%, transparent 70%),
+        radial-gradient(ellipse 55% 55% at 98.5% 98.5%,
+          rgba(0,0,0,0.72) 0%, transparent 70%),
+
+        /* TOP face: outer edge catches ceiling light, inner cove falls into shadow */
+        linear-gradient(to bottom,
+          rgba(255,248,165,0.72)  0px,    /* outer rim — catches direct light */
+          rgba(255,235,120,0.48)  5px,
+          rgba(240,210,90,0.28)  12px,
+          rgba(210,170,60,0.10)  24px,
+          transparent            40px,    /* flat face — no extra overlay */
+          rgba(0,0,0,0.10)       54px,    /* inner cove begins */
+          rgba(0,0,0,0.68)       76px),   /* deep inner cove at canvas edge */
+
+        /* LEFT face: secondary light, similar but dimmer */
+        linear-gradient(to right,
+          rgba(255,242,145,0.58)  0px,
+          rgba(255,228,105,0.36)  6px,
+          rgba(220,178,68,0.18)  16px,
+          transparent            38px,
+          rgba(0,0,0,0.08)       52px,
+          rgba(0,0,0,0.60)       76px),
+
+        /* BOTTOM face: no light, full shadow */
+        linear-gradient(to top,
+          rgba(8,3,0,0.90)        0px,    /* very dark back edge */
+          rgba(15,6,0,0.68)       5px,
+          rgba(25,10,0,0.40)     16px,
+          rgba(15,6,0,0.15)      30px,
+          transparent            44px,
+          rgba(0,0,0,0.18)       54px,
+          rgba(0,0,0,0.75)       76px),
+
+        /* RIGHT face: deep shadow, secondary shadow */
+        linear-gradient(to left,
+          rgba(0,0,0,0.84)        0px,
+          rgba(0,0,0,0.60)        6px,
+          rgba(0,0,0,0.32)       18px,
+          rgba(0,0,0,0.10)       32px,
+          transparent            46px,
+          rgba(0,0,0,0.16)       54px,
+          rgba(0,0,0,0.70)       76px);
+    }
+
+    /* Ridge highlight lines — the thin bright/dark lines at profile transitions */
+    .frame::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 2;
+      background:
+        /* TOP: outer ridge bright line (where outer bevel peaks, ~16px in) */
+        linear-gradient(to bottom,
+          transparent              15px,
+          rgba(255,252,190,0.90)  16px,
+          rgba(255,248,175,0.62)  17px,
+          rgba(255,238,148,0.28)  19px,
+          transparent              23px),
+
+        /* TOP: inner cove bright lip (the thin gold strip at canvas edge) */
+        linear-gradient(to bottom,
+          transparent              65px,
+          rgba(210,155,35,0.88)   66px,
+          rgba(190,138,28,0.55)   67px,
+          rgba(170,120,22,0.22)   70px,
+          transparent              74px),
+
+        /* LEFT: outer ridge bright line */
+        linear-gradient(to right,
+          transparent              14px,
+          rgba(255,248,175,0.75)  15px,
+          rgba(255,242,155,0.48)  16px,
+          rgba(240,220,120,0.22)  19px,
+          transparent              23px),
+
+        /* LEFT: inner cove bright lip */
+        linear-gradient(to right,
+          transparent              65px,
+          rgba(205,150,32,0.72)   66px,
+          rgba(185,132,25,0.42)   67px,
+          transparent              72px),
+
+        /* BOTTOM: outer ridge dark line (shadow side — ridge reads as a crease) */
+        linear-gradient(to top,
+          transparent              15px,
+          rgba(0,0,0,0.55)        16px,
+          rgba(0,0,0,0.30)        17px,
+          transparent              21px),
+
+        /* RIGHT: outer ridge dark line */
+        linear-gradient(to left,
+          transparent              14px,
+          rgba(0,0,0,0.50)        15px,
+          rgba(0,0,0,0.25)        16px,
+          transparent              20px);
+    }
+
+    .frame-inner {
+      background: linear-gradient(160deg, #1c0a00 0%, #0d0500 55%, #1c0a00 100%);
+      padding: 28px 22px 22px;
+      position: relative;
+      z-index: 1;
+      overflow: hidden;
+      /* Gold inner lip + dark rebate + canvas edge vignette */
+      box-shadow:
+        inset 0 0 0 2px rgba(195,135,25,0.65),   /* bright gold inner lip     */
+        inset 0 0 0 5px #060100,                  /* dark rebate channel       */
+        inset 0 0 0 8px rgba(140,95,14,0.32),     /* lip shadow / glow fade    */
+        inset 0 0 55px rgba(0,0,0,0.65);          /* canvas-edge vignette      */
+    }
+
+    /* Faint scan-line effect */
+    .frame-inner::before {
+      content: '';
+      position: absolute;
+      left: 0; right: 0;
+      height: 60px;
+      background: linear-gradient(transparent, rgba(200,146,42,0.04), transparent);
+      animation: scanline 8s linear infinite;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* === HEADER === */
+    .header {
+      text-align: center;
+      margin-bottom: 6px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .header-title {
+      font-family: 'Cinzel', serif;
+      font-weight: 900;
+      font-size: 13px;
+      letter-spacing: 5px;
+      color: var(--gold);
+      text-transform: uppercase;
+      opacity: 0.85;
+      animation: flicker 6s ease-in-out infinite;
+    }
+
+    .header-rule {
+      width: 100%;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+      margin: 5px 0 0;
+      opacity: 0.4;
+    }
+
+    /* === DISPLAY === */
+    .display {
+      background: linear-gradient(160deg, #120800, #0a0400 70%, #1a0a00);
+      border: 1px solid rgba(200,146,42,0.2);
+      border-radius: 4px;
+      padding: 14px 16px 10px;
+      margin-bottom: 12px;
+      min-height: 130px;
+      position: relative;
+      z-index: 1;
+      overflow: hidden;
+      box-shadow: inset 0 2px 12px rgba(0,0,0,0.8);
+    }
+
+    .display::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(160deg, rgba(200,146,42,0.03) 0%, transparent 50%);
+      pointer-events: none;
+    }
+
+    .expression {
+      font-family: 'IM Fell English', serif;
+      font-size: 13px;
+      color: rgba(200,146,42,0.5);
+      min-height: 18px;
+      margin-bottom: 4px;
+      letter-spacing: 0.5px;
+      font-style: italic;
+    }
+
+    .result-wrap {
+      display: flex;
+      align-items: baseline;
+      justify-content: flex-end;
+      gap: 6px;
+    }
+
+    .result {
+      font-family: 'Cinzel', serif;
+      font-size: 64px;
+      font-weight: 600;
+      color: var(--parchment);
+      line-height: 1;
+      letter-spacing: -1px;
+      transition: font-size 0.12s ease;
+      word-break: break-all;
+      text-shadow: 0 0 20px rgba(200,146,42,0.3);
+    }
+
+    .result.shrink-2 { font-size: 52px; }
+    .result.shrink-3 { font-size: 42px; letter-spacing: 0; }
+    .result.shrink-4 { font-size: 32px; }
+    .result.shrink-5 { font-size: 26px; }
+
+    /* === FACT PANEL === */
+    .fact-panel {
+      background: linear-gradient(135deg, #1e0e00, #160a00);
+      border: 1px solid rgba(200,146,42,0.25);
+      border-radius: 4px;
+      margin-bottom: 10px;
+      overflow: hidden;
+      position: relative;
+      z-index: 1;
+      min-height: 0;
+      max-height: 0;
+      transition: max-height 0.5s cubic-bezier(0.4,0,0.2,1), opacity 0.4s ease, margin-bottom 0.4s ease;
+      opacity: 0;
+    }
+
+    .fact-panel.visible {
+      max-height: 200px;
+      opacity: 1;
+    }
+
+    .fact-panel-inner {
+      padding: 10px 14px 12px;
+    }
+
+    .fact-era {
+      font-family: 'Cinzel', serif;
+      font-size: 9px;
+      letter-spacing: 3px;
+      color: var(--gold);
+      text-transform: uppercase;
+      opacity: 0.7;
+      margin-bottom: 5px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .fact-era::before, .fact-era::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(200,146,42,0.3));
+    }
+    .fact-era::after { background: linear-gradient(90deg, rgba(200,146,42,0.3), transparent); }
+
+    .fact-number-display {
+      font-family: 'Cinzel', serif;
+      font-weight: 900;
+      font-size: 42px;
+      color: var(--rust);
+      line-height: 1;
+      margin-bottom: 2px;
+      text-shadow: 0 0 30px rgba(139,37,0,0.5);
+      animation: stampIn 0.5s cubic-bezier(0.175,0.885,0.32,1.275) both;
+    }
+
+    .fact-text {
+      font-family: 'IM Fell English', serif;
+      font-size: 13.5px;
+      color: var(--parchment);
+      line-height: 1.55;
+      font-style: italic;
+      animation: revealFact 0.8s ease 0.2s both;
+    }
+
+    .fact-text em {
+      color: var(--gold-lt);
+      font-style: normal;
+      font-weight: 700;
+    }
+
+    .fact-source {
+      font-family: 'Cinzel', serif;
+      font-size: 8.5px;
+      color: rgba(200,146,42,0.35);
+      letter-spacing: 1px;
+      margin-top: 6px;
+      text-align: right;
+    }
+
+    /* === BUTTONS === */
+    .buttons {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 9px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .btn {
+      border: none;
+      cursor: pointer;
+      border-radius: 3px;
+      font-family: 'Cinzel', serif;
+      font-size: 20px;
+      font-weight: 600;
+      height: 62px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.07s ease, filter 0.07s ease, box-shadow 0.07s ease;
+      position: relative;
+      overflow: hidden;
+      outline: none;
+      -webkit-font-smoothing: antialiased;
+      letter-spacing: 0.5px;
+    }
+
+    .btn:active {
+      transform: scale(0.93) translateY(1px);
+      filter: brightness(1.3);
+    }
+
+    /* Number buttons — dark pressed leather */
+    .btn-num {
+      background: linear-gradient(160deg, #2a1800, #1a0e00);
+      color: var(--parchment);
+      border: 1px solid rgba(200,146,42,0.18);
+      box-shadow:
+        0 3px 0 #0d0700,
+        0 4px 8px rgba(0,0,0,0.6),
+        inset 0 1px 0 rgba(200,146,42,0.08);
+      font-size: 24px;
+    }
+
+    .btn-num:hover { background: linear-gradient(160deg, #341d00, #221200); }
+    .btn-num:active { box-shadow: 0 1px 0 #0d0700, inset 0 2px 4px rgba(0,0,0,0.5); }
+
+    /* Function buttons — oxidized brass */
+    .btn-func {
+      background: linear-gradient(160deg, #3d2800, #2a1a00);
+      color: var(--gold-lt);
+      border: 1px solid rgba(200,146,42,0.3);
+      box-shadow:
+        0 3px 0 #0d0700,
+        0 4px 8px rgba(0,0,0,0.6),
+        inset 0 1px 0 rgba(200,146,42,0.15);
+      font-size: 15px;
+      letter-spacing: 1px;
+    }
+
+    .btn-func:hover { background: linear-gradient(160deg, #4a3000, #332000); }
+    .btn-func:active { box-shadow: 0 1px 0 #0d0700, inset 0 2px 4px rgba(0,0,0,0.5); }
+
+    /* Operator buttons — blood-red wax seal */
+    .btn-op {
+      background: linear-gradient(160deg, #6b1800, #4a0f00);
+      color: var(--parchment);
+      border: 1px solid rgba(139,37,0,0.6);
+      box-shadow:
+        0 3px 0 #1a0000,
+        0 4px 10px rgba(139,37,0,0.4),
+        inset 0 1px 0 rgba(255,100,50,0.1);
+      font-size: 26px;
+    }
+
+    .btn-op:hover { background: linear-gradient(160deg, #7d1e00, #5c1200); }
+    .btn-op:active { box-shadow: 0 1px 0 #1a0000, inset 0 2px 4px rgba(0,0,0,0.6); }
+    .btn-op.active {
+      background: linear-gradient(160deg, #c8922a, #9a6a10);
+      color: var(--ink);
+      border-color: var(--gold-lt);
+      box-shadow: 0 3px 0 #3a1e00, 0 4px 12px rgba(200,146,42,0.5), inset 0 1px 0 rgba(255,220,100,0.3);
+    }
+
+    /* Zero spans 2 columns */
+    .btn-zero {
+      grid-column: span 2;
+      justify-content: flex-start;
+      padding-left: 20px;
+    }
+
+    /* Shimmer overlay */
     .btn::after {
       content: '';
       position: absolute;
@@ -158,327 +541,605 @@
       background: linear-gradient(
         130deg,
         transparent 0%,
-        transparent 38%,
-        rgba(255,255,255,0.13) 50%,
-        transparent 62%,
+        transparent 35%,
+        rgba(200,146,42,0.1) 50%,
+        transparent 65%,
         transparent 100%
       );
       background-size: 300% 300%;
-      animation: shimmer 4s ease-in-out infinite;
+      animation: shimmer 5s ease-in-out infinite;
       pointer-events: none;
-      transition: opacity 0.08s;
     }
 
-    .btn:active::after {
-      background: rgba(255,255,255,0.14);
-      animation: none;
-    }
-    .btn-func:active::after {
-      background: rgba(0,0,0,0.1);
-      animation: none;
+    /* Stagger shimmer */
+    .btn:nth-child(2)::after  { animation-delay: -0.7s; }
+    .btn:nth-child(3)::after  { animation-delay: -1.4s; }
+    .btn:nth-child(4)::after  { animation-delay: -2.1s; }
+    .btn:nth-child(5)::after  { animation-delay: -0.4s; }
+    .btn:nth-child(6)::after  { animation-delay: -1.1s; }
+    .btn:nth-child(7)::after  { animation-delay: -1.8s; }
+    .btn:nth-child(8)::after  { animation-delay: -2.5s; }
+    .btn:nth-child(9)::after  { animation-delay: -0.2s; }
+    .btn:nth-child(10)::after { animation-delay: -0.9s; }
+    .btn:nth-child(11)::after { animation-delay: -1.6s; }
+    .btn:nth-child(12)::after { animation-delay: -2.3s; }
+    .btn:nth-child(13)::after { animation-delay: -3s; }
+    .btn:nth-child(14)::after { animation-delay: -0.6s; }
+    .btn:nth-child(15)::after { animation-delay: -1.3s; }
+    .btn:nth-child(16)::after { animation-delay: -2s; }
+    .btn:nth-child(17)::after { animation-delay: -2.7s; }
+    .btn:nth-child(18)::after { animation-delay: -0.3s; }
+    .btn:nth-child(19)::after { animation-delay: -1s; }
+
+    .btn:active::after { animation: none; background: rgba(255,200,100,0.06); }
+
+    /* === FOOTER === */
+    .footer {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 10px;
+      position: relative;
+      z-index: 1;
     }
 
-    @media (max-width: 460px) {
-      .calculator {
-        width: 100vw;
-        border-radius: 0;
-        min-height: 100vh;
-        display: flex;
-        flex-direction: column;
-        justify-content: flex-end;
-      }
-      .display { padding-top: 60px; }
-      .buttons {
-        grid-template-columns: repeat(4, 1fr);
-        grid-template-rows: repeat(5, auto);
-        gap: calc((100vw - 32px) * 0.04);
-        padding-bottom: 20px;
-      }
-      .btn {
-        aspect-ratio: 1;
-        font-size: 8vw;
-        width: 100%;
-        border-radius: 50%;
-      }
-      .btn-zero {
-        aspect-ratio: auto;
-        height: calc((100vw - 32px) / 4);
-        font-size: 8vw;
-      }
-      .result { font-size: min(90px, 20vw); }
+    .footer-rule {
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(200,146,42,0.3), transparent);
+    }
+
+    .footer-text {
+      font-family: 'Cinzel', serif;
+      font-size: 7.5px;
+      letter-spacing: 2.5px;
+      color: rgba(200,146,42,0.3);
+      text-transform: uppercase;
+    }
+
+    /* === RESPONSIVE === */
+    @media (max-width: 520px) {
+      .frame { padding: 32px; }
+      .frame-inner { padding: 18px 14px 14px; }
+      .result { font-size: 52px; }
+      .btn { height: 52px; font-size: 18px; }
+      .btn-num { font-size: 20px; }
+      .btn-op  { font-size: 22px; }
     }
   </style>
 </head>
 <body>
-  <div class="calculator">
-    <div class="display">
-      <div class="expression" id="expression"></div>
-      <div class="result" id="result">0</div>
-    </div>
-    <div class="buttons">
-      <!-- Row 1 -->
-      <button class="btn btn-func" id="btn-ac" onclick="pressAC()">AC</button>
-      <button class="btn btn-func" onclick="pressPlusMinus()">
-        <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <!-- + top left -->
-          <text x="2" y="19" font-family="-apple-system,BlinkMacSystemFont,sans-serif" font-size="15" font-weight="500" fill="#000">+</text>
-          <!-- / diagonal center -->
-          <line x1="14" y1="34" x2="26" y2="6" stroke="#000" stroke-width="2.2" stroke-linecap="round"/>
-          <!-- - bottom right -->
-          <text x="23" y="37" font-family="-apple-system,BlinkMacSystemFont,sans-serif" font-size="20" font-weight="400" fill="#000">−</text>
-        </svg>
-      </button>
-      <button class="btn btn-func" onclick="pressPercent()">%</button>
-      <button class="btn btn-op" data-op="divide" onclick="pressOp('÷')">÷</button>
 
-      <!-- Row 2 -->
-      <button class="btn btn-num" onclick="pressNum('7')">7</button>
-      <button class="btn btn-num" onclick="pressNum('8')">8</button>
-      <button class="btn btn-num" onclick="pressNum('9')">9</button>
-      <button class="btn btn-op" data-op="multiply" onclick="pressOp('×')">×</button>
+  <!-- Floating dust particles (generated by JS) -->
 
-      <!-- Row 3 -->
-      <button class="btn btn-num" onclick="pressNum('4')">4</button>
-      <button class="btn btn-num" onclick="pressNum('5')">5</button>
-      <button class="btn btn-num" onclick="pressNum('6')">6</button>
-      <button class="btn btn-op" data-op="minus" onclick="pressOp('−')">−</button>
+  <div class="frame">
+    <div class="frame-inner">
+      <div class="header">
+        <div class="header-title">Chronos &middot; The Historical Calculator</div>
+        <div class="header-rule"></div>
+      </div>
 
-      <!-- Row 4 -->
-      <button class="btn btn-num" onclick="pressNum('1')">1</button>
-      <button class="btn btn-num" onclick="pressNum('2')">2</button>
-      <button class="btn btn-num" onclick="pressNum('3')">3</button>
-      <button class="btn btn-op" data-op="plus" onclick="pressOp('+')">+</button>
+      <div class="display">
+        <div class="expression" id="expression"></div>
+        <div class="result-wrap">
+          <div class="result" id="result">0</div>
+        </div>
+      </div>
 
-      <!-- Row 5 -->
-      <button class="btn btn-num btn-zero" onclick="pressNum('0')">0</button>
-      <button class="btn btn-num btn-decimal" onclick="pressDecimal()">.</button>
-      <button class="btn btn-op" data-op="equals" onclick="pressEquals()">=</button>
+      <!-- Fact panel (hidden until = is pressed) -->
+      <div class="fact-panel" id="factPanel">
+        <div class="fact-panel-inner">
+          <div class="fact-era" id="factEra">Anno Domini</div>
+          <div style="display:flex;align-items:baseline;gap:12px">
+            <div class="fact-number-display" id="factNum"></div>
+            <div class="fact-text" id="factText"></div>
+          </div>
+          <div class="fact-source" id="factSource"></div>
+        </div>
+      </div>
+
+      <div class="buttons">
+        <!-- Row 1 -->
+        <button class="btn btn-func" id="btn-ac" onclick="pressAC()">AC</button>
+        <button class="btn btn-func" onclick="pressPlusMinus()">
+          <svg width="28" height="28" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <text x="2" y="19" font-family="serif" font-size="15" font-weight="600" fill="#e8b84b">+</text>
+            <line x1="14" y1="34" x2="26" y2="6" stroke="#e8b84b" stroke-width="2.2" stroke-linecap="round"/>
+            <text x="22" y="37" font-family="serif" font-size="20" font-weight="400" fill="#e8b84b">−</text>
+          </svg>
+        </button>
+        <button class="btn btn-func" onclick="pressPercent()">%</button>
+        <button class="btn btn-op" data-op="divide" onclick="pressOp('÷')">÷</button>
+        <!-- Row 2 -->
+        <button class="btn btn-num" onclick="pressNum('7')">7</button>
+        <button class="btn btn-num" onclick="pressNum('8')">8</button>
+        <button class="btn btn-num" onclick="pressNum('9')">9</button>
+        <button class="btn btn-op" data-op="multiply" onclick="pressOp('×')">×</button>
+        <!-- Row 3 -->
+        <button class="btn btn-num" onclick="pressNum('4')">4</button>
+        <button class="btn btn-num" onclick="pressNum('5')">5</button>
+        <button class="btn btn-num" onclick="pressNum('6')">6</button>
+        <button class="btn btn-op" data-op="minus" onclick="pressOp('−')">−</button>
+        <!-- Row 4 -->
+        <button class="btn btn-num" onclick="pressNum('1')">1</button>
+        <button class="btn btn-num" onclick="pressNum('2')">2</button>
+        <button class="btn btn-num" onclick="pressNum('3')">3</button>
+        <button class="btn btn-op" data-op="plus" onclick="pressOp('+')">+</button>
+        <!-- Row 5 -->
+        <button class="btn btn-num btn-zero" onclick="pressNum('0')">0</button>
+        <button class="btn btn-num" onclick="pressDecimal()" style="font-size:32px;font-weight:700">.</button>
+        <button class="btn btn-op" data-op="equals" onclick="pressEquals()">=</button>
+      </div>
+
+      <div class="footer">
+        <div class="footer-rule"></div>
+        <div class="footer-text">Numbers carry history</div>
+        <div class="footer-rule"></div>
+      </div>
     </div>
   </div>
 
-  <script>
-    let current = '0';
-    let stored = null;
-    let operator = null;
-    let justEvaluated = false;
-    let expressionParts = [];
+<script>
+/* ═══════════════════════════════════════════
+   HISTORICAL FACTS DATABASE
+   Key: integer (abs value used for lookup)
+   ═══════════════════════════════════════════ */
+const FACTS = {
+  0:    { text: 'The concept of <em>zero</em> as a number was first formalized by Indian mathematician <em>Brahmagupta</em> in 628 AD.', source: 'Brahmagupta, Brāhmasphuṭasiddhānta' },
+  1:    { text: 'In many ancient traditions, <em>One</em> represented the undivided cosmos — the Monad from which all existence springs.', source: 'Pythagorean numerology, c. 500 BC' },
+  2:    { text: '<em>Two</em> tablets of stone. The Ten Commandments were inscribed on <em>two</em> stone tablets handed to Moses on Mount Sinai.', source: 'Exodus 31:18' },
+  3:    { text: 'Julius Caesar was stabbed <em>23 times</em>, but only <em>3</em> wounds were considered potentially fatal by the physician Antistius.', source: 'Suetonius, Lives of the Twelve Caesars' },
+  4:    { text: 'The Four Humors — blood, phlegm, black bile, yellow bile — governed medicine from Hippocrates until the 17th century.', source: 'Hippocrates, c. 400 BC' },
+  5:    { text: 'The <em>Pentagon</em> was completed in just 16 months in <em>1943</em>, becoming the world\'s largest office building.', source: 'U.S. War Department, 1943' },
+  6:    { text: 'The first printed book in Europe, Gutenberg\'s Bible, was produced in <em>1455</em> with a 42-line layout across <em>6</em> centuries of history.', source: 'Gutenberg Bible, 1455' },
+  7:    { text: 'The <em>Seven Wonders</em> of the Ancient World were catalogued by Antipater of Sidon around <em>100 BC</em>. Only the Great Pyramid survives.', source: 'Antipater of Sidon, c. 100 BC' },
+  8:    { text: 'In <em>1888</em>, Nikola Tesla invented the <em>8-pole</em> AC induction motor, revolutionizing electrical power transmission worldwide.', source: 'Tesla, U.S. Patent 381,968, 1888' },
+  9:    { text: 'Emperor Domitian, who ruled Rome from <em>81–96 AD</em>, declared himself "Dominus et Deus" — Lord and God.', source: 'Suetonius, De Vita Caesarum' },
+  10:   { text: 'The Commandments were <em>10</em>. Moses descended from Sinai twice — the first tablets were smashed in fury over the Golden Calf.', source: 'Exodus 20, c. 1280 BC' },
+  11:   { text: 'King Henry VIII had <em>6</em> wives, but ruled for <em>38</em> years beginning in <em>1509</em>. His reign birthed the Church of England.', source: 'Tudor records, 1509–1547' },
+  12:   { text: 'There were <em>12</em> Apostles of Jesus Christ, and the Roman year originally had <em>12</em> months under King Numa in 713 BC.', source: 'Plutarch, Lives' },
+  13:   { text: 'The Last Supper had <em>13</em> guests — a tradition so feared it birthed triskaidekaphobia, the dread of the number <em>13</em>.', source: 'Gospel of John 13:21' },
+  14:   { text: 'In <em>1492</em>, Columbus set sail with <em>3</em> ships and roughly <em>90</em> sailors. He landed on October <em>12th</em> after 33 days at sea.', source: 'Columbus, Diario de a Bordo, 1492' },
+  15:   { text: 'The <em>Magna Carta</em> was signed on June <em>15</em>, 1215, limiting royal power and laying groundwork for constitutional law.', source: 'Magna Carta, Runnymede, 1215' },
+  16:   { text: 'Mary Queen of Scots became Queen of Scotland at just <em>6</em> days old in <em>1542</em>, one of history\'s youngest monarchs.', source: 'Scottish royal records, 1542' },
+  17:   { text: 'The Boston Tea Party took place on December <em>16, 1773</em>, when <em>342</em> chests of British tea were hurled into the harbor.', source: 'Boston Gazette, 1773' },
+  18:   { text: 'Napoleon Bonaparte was exiled to Saint Helena in <em>1815</em> at age <em>46</em>. He had conquered most of Europe by age <em>35</em>.', source: 'Napoleon, Mémoires' },
+  19:   { text: 'The Treaty of Versailles, signed in <em>1919</em>, imposed such severe reparations on Germany it helped ignite a second world war.', source: 'Treaty of Versailles, June 28, 1919' },
+  20:   { text: 'The <em>20th</em> century witnessed more human deaths by warfare than all previous centuries combined — an estimated 187 million.', source: 'Brzezinski, Out of Control, 1993' },
+  21:   { text: 'On the <em>21st</em> of July, <em>1969</em>, Neil Armstrong stepped onto the lunar surface: "One small step for man…"', source: 'NASA Apollo 11 mission log' },
+  22:   { text: 'President John F. Kennedy was assassinated on November <em>22, 1963</em>, in Dallas. He was 46 years old.', source: 'Warren Commission Report, 1964' },
+  23:   { text: 'Julius Caesar was stabbed <em>23</em> times in the Theatre of Pompey on the Ides of March, <em>44 BC</em>.', source: 'Suetonius, Lives of the Twelve Caesars' },
+  24:   { text: 'There are <em>24</em> hours in a day — a system devised by ancient <em>Egyptians</em>, who used 12 hours for day and 12 for night.', source: 'Egyptian astronomy, c. 1500 BC' },
+  25:   { text: 'Leonardo da Vinci began painting The Last Supper at age <em>43</em> in <em>1495</em>. The work took three years to complete.', source: 'Vasari, Lives of the Artists' },
+  26:   { text: 'The <em>26th</em> amendment lowered the US voting age to <em>18</em> in <em>1971</em>, adding 11 million new voters overnight.', source: 'U.S. Constitution, 26th Amendment, 1971' },
+  27:   { text: 'The Club of <em>27</em> — Jimi Hendrix, Janis Joplin, Jim Morrison, Kurt Cobain — all died at the same age, 27.', source: 'Rock history records' },
+  28:   { text: 'February has <em>28</em> days — a Roman oddity introduced when Julius Caesar reformed the calendar in <em>46 BC</em>.', source: 'Julian Calendar, 46 BC' },
+  29:   { text: 'February 29 occurs every leap year. The rule was established by Pope Gregory XIII in <em>1582</em> in the Gregorian calendar.', source: 'Gregorian Calendar Reform, 1582' },
+  30:   { text: 'The Thirty Years\' War (<em>1618–1648</em>) killed an estimated 8 million people, devastating central Europe for a generation.', source: 'Treaty of Westphalia, 1648' },
+  31:   { text: 'In <em>1831</em>, Charles Darwin set sail on HMS Beagle — a 5-year voyage that would produce the theory of evolution.', source: 'Darwin, Voyage of the Beagle, 1839' },
+  32:   { text: 'George Washington had <em>32</em> horses in his stables at Mount Vernon and had 4 horses shot from beneath him in battle.', source: 'Mount Vernon estate records' },
+  33:   { text: 'Jesus Christ was crucified at age <em>33</em>, according to most Christian traditions, around <em>33 AD</em>.', source: 'Gospel accounts' },
+  34:   { text: 'Alexander the Great died in <em>323 BC</em> at just <em>32</em> years old, having conquered an empire stretching to India.', source: 'Plutarch, Life of Alexander' },
+  35:   { text: 'Mozart composed his final work, the <em>Requiem</em>, while dying in <em>1791</em> at age <em>35</em>. It was left unfinished at his death.', source: 'Constanze Mozart, 1791' },
+  36:   { text: 'In <em>36 BC</em>, Mark Antony\'s disastrous Parthian campaign failed — the beginning of his political downfall and eventual suicide.', source: 'Plutarch, Life of Antony' },
+  37:   { text: 'Vincent van Gogh shot himself on July <em>27, 1890</em>, dying at <em>37</em>. He had sold only one painting in his lifetime.', source: 'Theo van Gogh correspondence, 1890' },
+  38:   { text: 'The <em>38th</em> parallel divides North and South Korea — a line drawn hastily in <em>1945</em> by two American colonels.', source: 'SWNCC 176/8, August 1945' },
+  39:   { text: 'Richard Feynman published his <em>Feynman Lectures</em> in 1963. He had won the Nobel Prize in Physics in <em>1965</em>.', source: 'Nobel Committee, 1965' },
+  40:   { text: 'Moses wandered the desert for <em>40</em> years. Jesus fasted <em>40</em> days. In ancient numerology, <em>40</em> meant "a very long time."', source: 'Torah, New Testament' },
+  41:   { text: 'In <em>41 AD</em>, Emperor Caligula was assassinated by his own Praetorian Guard after just 4 years of increasingly erratic rule.', source: 'Suetonius, Life of Caligula' },
+  42:   { text: '<em>42</em> is the "Answer to the Ultimate Question of Life, the Universe, and Everything" per Douglas Adams — and the age the Universe was when Adams published it.', source: 'Douglas Adams, Hitchhiker\'s Guide, 1979' },
+  43:   { text: 'Thomas Jefferson wrote the Declaration of Independence at age <em>33</em>, but was <em>43</em> when the Constitution was ratified in <em>1788</em>.', source: 'U.S. Constitutional Convention, 1787' },
+  44:   { text: '<em>44</em> U.S. presidents have served. Barack Obama was the <em>44th</em> president, elected in <em>2008</em>, the first African-American president.', source: 'U.S. Presidential records' },
+  45:   { text: 'The US Civil War ended in <em>1865</em> after <em>620,000</em> deaths. Abraham Lincoln was assassinated at age <em>56</em> — just days after victory.', source: 'Lincoln assassination records, April 14, 1865' },
+  46:   { text: 'Humans have <em>46</em> chromosomes — a fact not discovered until <em>1956</em> when Tjio and Levan counted them correctly for the first time.', source: 'Tjio & Levan, Hereditas, 1956' },
+  47:   { text: 'In <em>47 BC</em>, Julius Caesar famously wrote "Veni, vidi, vici" — I came, I saw, I conquered — after defeating Pharnaces of Pontus.', source: 'Suetonius, Life of Caesar' },
+  48:   { text: 'The United States had <em>48</em> states from <em>1912</em> until Alaska joined in <em>1959</em>, followed by Hawaii the same year.', source: 'U.S. Congressional records, 1959' },
+  49:   { text: 'The <em>49ers</em> Gold Rush of <em>1849</em> brought 300,000 people to California, making San Francisco a boomtown of the American West.', source: 'California Gold Rush records, 1849' },
+  50:   { text: 'The Roman Empire at its peak in <em>117 AD</em> covered <em>5 million</em> km² — roughly <em>50</em> times the size of the United Kingdom.', source: 'Roman Imperial records, Trajan era' },
+  51:   { text: 'Area <em>51</em>, the classified U.S. Air Force facility, was officially acknowledged by the CIA only in <em>2013</em> — 60 years after it opened.', source: 'CIA declassified documents, 2013' },
+  52:   { text: 'A deck of playing cards has <em>52</em> cards — one for each week of the year, a design thought to date back to <em>15th-century France</em>.', source: 'Playing card history, c. 1480' },
+  54:   { text: 'The Byzantine Empire lasted <em>1,123</em> years before falling to the Ottomans in <em>1453</em>, preserving Roman law through the Dark Ages.', source: 'Fall of Constantinople, May 29, 1453' },
+  55:   { text: 'In <em>55 BC</em>, Julius Caesar made the first Roman expedition to Britain, landing with 2 legions at the white cliffs of Kent.', source: 'Caesar, Gallic Wars, Book IV' },
+  60:   { text: 'Our <em>60</em>-minute hour and <em>60</em>-second minute comes from the Babylonians, who used a base-60 number system around <em>2000 BC</em>.', source: 'Babylonian mathematics, c. 2000 BC' },
+  64:   { text: 'A chess board has <em>64</em> squares. Chess originated in Gupta Empire India around <em>600 AD</em> and reached Europe by the year <em>1000</em>.', source: 'Murray, A History of Chess, 1913' },
+  66:   { text: 'The <em>66</em> books of the Protestant Bible were canonized by the Council of Carthage in <em>397 AD</em>, setting scripture for centuries.', source: 'Council of Carthage, 397 AD' },
+  69:   { text: 'In <em>69 AD</em> — the "Year of the Four Emperors" — Rome saw Galba, Otho, Vitellius, and Vespasian all claim power within 12 months.', source: 'Tacitus, Histories' },
+  70:   { text: 'In <em>70 AD</em>, the Roman general Titus destroyed the Second Temple in Jerusalem — a catastrophe that shaped Jewish history forever.', source: 'Josephus, The Jewish War, 75 AD' },
+  76:   { text: 'Halley\'s Comet returns every <em>75–76</em> years. It was visible in <em>1066</em> before the Norman Conquest, and will return in <em>2061</em>.', source: 'Halley, Synopsis Astronomia Cometicae, 1705' },
+  79:   { text: 'In <em>79 AD</em>, Mount Vesuvius erupted, burying Pompeii and Herculaneum. Pliny the Elder died investigating it — a martyr of curiosity.', source: 'Pliny the Younger, Letters to Tacitus' },
+  80:   { text: 'The Colosseum in Rome was completed around <em>80 AD</em>. It seated <em>50,000–80,000</em> spectators and hosted gladiatorial combat for 400 years.', source: 'Roman historical records, c. 80 AD' },
+  81:   { text: 'In <em>81 AD</em>, Emperor Domitian seized power in Rome, launching a reign of terror that ended when he was assassinated in <em>96 AD</em>.', source: 'Suetonius, Life of Domitian' },
+  88:   { text: 'In <em>1988</em>, Stephen Hawking published A Brief History of Time. He lived with ALS for <em>55 years</em>, defying a 2-year prognosis.', source: 'Hawking, A Brief History of Time, 1988' },
+  90:   { text: 'The Byzantine Empress Theodora, who died in <em>548 AD</em>, rose from circus performer to the most powerful woman in the Roman world.', source: 'Procopius, Secret History, c. 550 AD' },
+  95:   { text: 'In <em>1517</em>, Martin Luther nailed his <em>95</em> Theses to a church door in Wittenberg, sparking the Protestant Reformation.', source: 'Luther, 95 Theses, October 31, 1517' },
+  99:   { text: 'In <em>99 BC</em>, the Roman tribune Saturninus was killed amid political chaos — a precedent for the violence that would end the Republic.', source: 'Plutarch, Life of Marius' },
+  100:  { text: 'The Roman Colosseum was inaugurated with <em>100</em> days of games in <em>80 AD</em>, during which an estimated 9,000 animals were killed.', source: 'Cassius Dio, Roman History' },
+  101:  { text: 'Room <em>101</em> in George Orwell\'s <em>1984</em> contained one\'s worst fear. Orwell based it on a real BBC meeting room he despised.', source: 'George Orwell, 1984, 1949' },
+  108:  { text: 'The distance from Earth to the Sun is roughly <em>108</em> times the Sun\'s diameter — a ratio sacred to ancient Vedic cosmology.', source: 'Vedic astronomical texts, c. 1500 BC' },
+  111:  { text: 'The British Magna Carta is <em>809</em> years old. Its Article <em>39</em> guarantees no free man shall be imprisoned without judgment of his peers.', source: 'Magna Carta, Runnymede, June 15, 1215' },
+  120:  { text: 'The number <em>120</em> was sacred to Sumerians — their arithmetic used base 60, making <em>120</em> the "great hundred" of their counting system.', source: 'Sumerian mathematical tablets, c. 2500 BC' },
+  144:  { text: '<em>144</em> is a Gross — a medieval unit of dozen-dozens. Medieval merchants traded by the gross for centuries across European markets.', source: 'Medieval trade records, 12th century' },
+  180:  { text: 'The <em>180</em>-degree straight line was the basis of Euclidean geometry, codified in <em>300 BC</em> in Alexandria, shaping science for 2,000 years.', source: 'Euclid, Elements, c. 300 BC' },
+  186:  { text: 'The speed of light is approximately <em>186,000</em> miles per second. Einstein\'s Special Relativity, published in <em>1905</em>, showed nothing can exceed it.', source: 'Einstein, Special Relativity, 1905' },
+  200:  { text: 'The Roman Empire at its height had about <em>200</em> senators. Julius Caesar expanded the Senate to <em>900</em>, diluting its ancient power.', source: 'Suetonius, Life of Caesar' },
+  210:  { text: 'The Domesday Book of <em>1086</em> surveyed England for William the Conqueror. It recorded <em>13,418</em> settlements and changed tax collection forever.', source: 'Domesday Book, 1086 AD' },
+  238:  { text: 'Uranium-<em>238</em> has a half-life of 4.47 billion years — nearly as old as the Earth. Marie Curie discovered radioactivity in <em>1898</em>.', source: 'Curie, Radioactive Substances, 1903' },
+  256:  { text: '<em>256</em> is 2⁸ — the number of values in a byte. The byte became the fundamental unit of computing in the <em>1960s</em> at IBM.', source: 'IBM System/360 architecture, 1964' },
+  300:  { text: 'The Battle of Thermopylae in <em>480 BC</em> saw <em>300</em> Spartans hold a mountain pass against 100,000 Persian soldiers for three days.', source: 'Herodotus, Histories, Book VII' },
+  314:  { text: '<em>π</em> begins 3.14… Archimedes approximated π around <em>250 BC</em>. It was proved irrational only in <em>1761</em> by Johann Lambert.', source: 'Archimedes, Measurement of a Circle, c. 250 BC' },
+  360:  { text: 'The Babylonians divided the circle into <em>360</em> degrees around <em>1500 BC</em>, choosing 360 because it divides evenly into so many parts.', source: 'Babylonian astronomy, c. 1500 BC' },
+  365:  { text: 'Julius Caesar standardized the year at <em>365</em> days in <em>46 BC</em>, with a leap day every 4 years — correcting centuries of calendar drift.', source: 'Julius Caesar, Julian Calendar, 46 BC' },
+  400:  { text: 'The Library of Alexandria was built around <em>300 BC</em> and housed over <em>400,000</em> scrolls before it was destroyed — possibly by Julius Caesar.', source: 'Plutarch, Life of Caesar' },
+  476:  { text: 'In <em>476 AD</em>, Romulus Augustulus was deposed — the final emperor of the Western Roman Empire. History calls this the Fall of Rome.', source: 'Edward Gibbon, Decline and Fall of the Roman Empire' },
+  500:  { text: 'Around <em>500 AD</em>, the Indian mathematician Aryabhata proposed that Earth rotates on its axis — over 1,000 years before Copernicus.', source: 'Aryabhata, Aryabhatiya, 499 AD' },
+  666:  { text: '<em>666</em>, the "Number of the Beast" from Revelation, likely referred to the Emperor Nero in coded numerology used by early Christians.', source: 'Book of Revelation 13:18, c. 95 AD' },
+  700:  { text: 'By <em>700 AD</em>, the Islamic Golden Age had begun. Baghdad would become the world\'s largest city, home to the greatest library of the age.', source: 'House of Wisdom, Baghdad, 8th century' },
+  776:  { text: 'The first recorded Olympic Games were held in <em>776 BC</em> at Olympia, Greece — beginning a tradition that ran for 1,169 years.', source: 'Pindar, Olympian Odes, c. 476 BC' },
+  800:  { text: 'On Christmas Day, <em>800 AD</em>, Pope Leo III crowned Charlemagne Emperor of the Romans — reuniting much of the West for the first time since Rome.', source: 'Einhard, Life of Charlemagne, c. 830 AD' },
+  1000: { text: 'In the year <em>1000 AD</em>, Leif Erikson landed in North America — 500 years before Columbus, calling the land "Vinland."', source: 'Vinland Sagas, c. 13th century' },
+  1066: { text: 'The Norman Conquest of England in <em>1066</em> at the Battle of Hastings fundamentally transformed English language, law, and culture.', source: 'Bayeux Tapestry, c. 1070 AD' },
+  1215: { text: 'The Magna Carta was signed in <em>1215</em> — the first document to limit royal power and assert that the king was subject to the rule of law.', source: 'Magna Carta, Runnymede, June 15, 1215' },
+  1440: { text: 'Gutenberg invented the printing press around <em>1440</em>, producing the Bible in <em>1455</em>. It democratized knowledge and ended the Church\'s information monopoly.', source: 'Gutenberg Bible colophon, 1455' },
+  1492: { text: 'In <em>1492</em>, Columbus reached the Americas, Moors were expelled from Spain, and Jews were banished — a single year that reshaped the world.', source: 'Columbus, Diario de a Bordo, 1492' },
+  1776: { text: 'The United States Declaration of Independence was adopted on July 4, <em>1776</em>. It was largely written by Thomas Jefferson in just 17 days.', source: 'Continental Congress, July 4, 1776' },
+  1789: { text: 'The French Revolution began in <em>1789</em> when the Bastille was stormed on July 14th — a moment that echoes in "Liberté, Égalité, Fraternité."', source: 'Revolutionary records, Paris, 1789' },
+  1815: { text: 'Napoleon was finally defeated at Waterloo on June 18, <em>1815</em> — 100 days after his escape from exile on Elba.', source: 'Wellington dispatches, June 18, 1815' },
+  1865: { text: 'The <em>13th Amendment</em> abolished slavery in the United States on December 6, <em>1865</em>, eight months after the Civil War ended.', source: 'U.S. Constitution, 13th Amendment, 1865' },
+  1903: { text: 'The Wright Brothers achieved powered flight on December 17, <em>1903</em>. Their first flight lasted 12 seconds and covered 120 feet.', source: 'Wright Brothers diary, December 17, 1903' },
+  1905: { text: 'Einstein published 4 papers in <em>1905</em> — his "miracle year." Special Relativity. E=mc². Brownian motion. The photoelectric effect.', source: 'Einstein, Annalen der Physik, 1905' },
+  1945: { text: 'World War II ended in <em>1945</em> with 70–85 million dead — the deadliest conflict in human history, comprising 3% of the world\'s population.', source: 'UN War casualties estimates' },
+  1969: { text: 'On July 20, <em>1969</em>, Neil Armstrong became the first human to walk on the Moon. <em>600 million</em> people watched on television.', source: 'NASA Apollo 11, July 20, 1969' },
+  2001: { text: 'On September 11, <em>2001</em>, terrorist attacks on New York and Washington killed <em>2,977</em> people and transformed 21st-century geopolitics.', source: '9/11 Commission Report, 2004' },
+};
 
-    const resultEl = document.getElementById('result');
-    const expressionEl = document.getElementById('expression');
-    const acBtn = document.getElementById('btn-ac');
+/* ═══════════════════════════════════════════
+   FACT LOOKUP — nearest known number
+   ═══════════════════════════════════════════ */
+function getFact(value) {
+  const num = parseFloat(value);
+  if (!isFinite(num) || num === 0) {
+    return FACTS[0] ? { num: 0, ...FACTS[0] } : null;
+  }
 
-    function updateDisplay() {
-      resultEl.textContent = formatNumber(current);
+  const abs = Math.round(Math.abs(num));
+  const keys = Object.keys(FACTS).map(Number).sort((a, b) => a - b);
 
-      // Adjust font size based on length
-      const len = formatNumber(current).length;
-      resultEl.className = 'result';
-      if (len >= 10) resultEl.classList.add('shrink-5');
-      else if (len >= 8) resultEl.classList.add('shrink-4');
-      else if (len >= 7) resultEl.classList.add('shrink-3');
-      else if (len >= 6) resultEl.classList.add('shrink-2');
+  // Exact match
+  if (FACTS[abs]) return { num: abs, ...FACTS[abs] };
 
-      // AC vs C
-      acBtn.textContent = (current === '0' && stored === null) ? 'AC' : 'C';
-    }
+  // Nearest key within 30% of value (or max distance 50)
+  let closest = null, closestDist = Infinity;
+  for (const k of keys) {
+    const d = Math.abs(k - abs);
+    if (d < closestDist) { closestDist = d; closest = k; }
+  }
 
-    function formatNumber(val) {
-      if (val === 'Error') return 'Error';
-      const num = parseFloat(val);
-      if (isNaN(num)) return val;
+  // Only show if reasonably close
+  const threshold = Math.max(50, abs * 0.35);
+  if (closestDist <= threshold && closest !== null) {
+    return { num: closest, ...FACTS[closest] };
+  }
 
-      // Check if it has decimal in current string
-      const hasDecimal = val.includes('.');
-      const isTrailingDot = val.endsWith('.');
+  // Fallback: pick a random famous fact
+  const picks = [42, 300, 1492, 1776, 1969, 95, 33, 40];
+  const k = picks[Math.floor(Math.random() * picks.length)];
+  return { num: k, ...FACTS[k] };
+}
 
-      if (isTrailingDot) {
-        return formatInt(val.slice(0, -1)) + '.';
-      }
+/* ═══════════════════════════════════════════
+   CALCULATOR STATE
+   ═══════════════════════════════════════════ */
+let current = '0';
+let stored = null;
+let operator = null;
+let justEvaluated = false;
+let expressionParts = [];
 
-      if (hasDecimal) {
-        const [intPart, decPart] = val.split('.');
-        return formatInt(intPart) + '.' + decPart;
-      }
+const resultEl     = document.getElementById('result');
+const expressionEl = document.getElementById('expression');
+const acBtn        = document.getElementById('btn-ac');
+const factPanel    = document.getElementById('factPanel');
+const factEraEl    = document.getElementById('factEra');
+const factNumEl    = document.getElementById('factNum');
+const factTextEl   = document.getElementById('factText');
+const factSrcEl    = document.getElementById('factSource');
 
-      // Integer — use locale for thousand separators but keep it clean
-      if (Math.abs(num) >= 1e12) {
-        return num.toExponential(5).replace('e+', 'e');
-      }
-      return num.toLocaleString('en-US', { maximumFractionDigits: 9 }).replace(/,/g, ',');
-    }
+/* ═══════════════════════════════════════════
+   WEB AUDIO
+   ═══════════════════════════════════════════ */
+let audioCtx = null;
+function ctx() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
 
-    function formatInt(s) {
-      const num = parseInt(s, 10);
-      if (isNaN(num)) return s;
-      return num.toLocaleString('en-US');
-    }
+function tone(freq, delay, dur, type = 'sine', vol = 0.18, atk = 0.008) {
+  const c = ctx(), osc = c.createOscillator(), env = c.createGain(), t = c.currentTime + delay;
+  osc.connect(env); env.connect(c.destination);
+  osc.type = type; osc.frequency.value = freq;
+  env.gain.setValueAtTime(0, t);
+  env.gain.linearRampToValueAtTime(vol, t + atk);
+  env.gain.setValueAtTime(vol, t + dur * 0.6);
+  env.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  osc.start(t); osc.stop(t + dur + 0.02);
+}
 
-    function clearOpHighlight() {
-      document.querySelectorAll('.btn-op').forEach(b => b.classList.remove('active'));
-    }
+function noise(delay, dur, vol = 0.1) {
+  const c = ctx(), buf = c.createBuffer(1, c.sampleRate * dur, c.sampleRate);
+  const data = buf.getChannelData(0);
+  for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
+  const src = c.createBufferSource(), flt = c.createBiquadFilter(), env = c.createGain();
+  flt.type = 'bandpass'; flt.frequency.value = 800;
+  flt.frequency.exponentialRampToValueAtTime(200, c.currentTime + delay + dur);
+  src.buffer = buf; src.connect(flt); flt.connect(env); env.connect(c.destination);
+  const t = c.currentTime + delay;
+  env.gain.setValueAtTime(vol, t); env.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  src.start(t); src.stop(t + dur + 0.01);
+}
 
-    function highlightOp(op) {
-      clearOpHighlight();
-      const map = { '÷': 'divide', '×': 'multiply', '−': 'minus', '+': 'plus' };
-      const key = map[op];
-      if (key) {
-        const btn = document.querySelector(`[data-op="${key}"]`);
-        if (btn) btn.classList.add('active');
-      }
-    }
+const DIGIT_FREQ = [261.63,293.66,329.63,392.00,440.00,523.25,587.33,659.25,783.99,880.00];
+const PENTA_MAJ  = [261.63,293.66,329.63,392.00,440.00,523.25,587.33,659.25];
+const PENTA_MIN  = [261.63,293.66,311.13,349.23,392.00,466.16,523.25,587.33];
 
-    function pressNum(n) {
-      clearOpHighlight();
-      if (justEvaluated) {
-        current = n;
-        expressionParts = [];
-        justEvaluated = false;
-      } else if (current === '0') {
-        current = n;
-      } else {
-        if (current.replace('-', '').replace('.', '').length >= 9) return;
-        current += n;
-      }
-      updateDisplay();
-    }
+function sndDigit(n)   { tone(DIGIT_FREQ[+n]||440, 0, 0.11, 'triangle', 0.13, 0.006); }
+function sndDecimal()  { tone(1046.5, 0, 0.09, 'sine', 0.1, 0.004); }
+function sndFlip()     { tone(440,0,0.06,'sine',0.14); tone(330,0.05,0.07,'sine',0.11); }
+function sndPercent()  { tone(880, 0, 0.07, 'sine', 0.1, 0.003); }
 
-    function pressDecimal() {
-      clearOpHighlight();
-      if (justEvaluated) {
-        current = '0.';
-        justEvaluated = false;
-      } else if (!current.includes('.')) {
-        current += '.';
-      }
-      updateDisplay();
-    }
+function sndOp(op) {
+  if (op==='+') { tone(392,0,0.09,'sine',0.17); tone(523.25,0.07,0.11,'sine',0.14); }
+  else if (op==='−') { tone(523.25,0,0.09,'sine',0.17); tone(392,0.07,0.11,'sine',0.14); }
+  else if (op==='×') { tone(329.63,0,0.07,'sine',0.17); tone(415.3,0.05,0.07,'sine',0.15); tone(493.88,0.10,0.10,'sine',0.13); }
+  else if (op==='÷') { tone(698.46,0,0.12,'sine',0.17); tone(523.25,0.09,0.12,'sine',0.12); }
+}
 
-    function pressOp(op) {
-      if (current === 'Error') return;
-      justEvaluated = false;
+function sndClear() {
+  noise(0,0.25,0.12);
+  const c=ctx(),osc=c.createOscillator(),env=c.createGain();
+  osc.connect(env); env.connect(c.destination); osc.type='sine';
+  osc.frequency.setValueAtTime(660,c.currentTime);
+  osc.frequency.exponentialRampToValueAtTime(180,c.currentTime+0.22);
+  env.gain.setValueAtTime(0.15,c.currentTime);
+  env.gain.exponentialRampToValueAtTime(0.0001,c.currentTime+0.22);
+  osc.start(c.currentTime); osc.stop(c.currentTime+0.25);
+}
 
-      if (stored !== null && operator && !justEvaluated) {
-        const result = compute(parseFloat(stored), parseFloat(current), operator);
-        expressionParts = [formatNumberPlain(result), op];
-        stored = String(result);
-        current = String(result);
-        if (result === 'Error') { current = 'Error'; updateDisplay(); return; }
-      } else {
-        expressionParts = [formatNumberPlain(parseFloat(current)), op];
-        stored = current;
-      }
+function sndError() {
+  const c=ctx(),osc=c.createOscillator(),env=c.createGain();
+  osc.connect(env); env.connect(c.destination); osc.type='sawtooth';
+  osc.frequency.setValueAtTime(220,c.currentTime);
+  osc.frequency.exponentialRampToValueAtTime(110,c.currentTime+0.35);
+  env.gain.setValueAtTime(0.2,c.currentTime);
+  env.gain.exponentialRampToValueAtTime(0.0001,c.currentTime+0.35);
+  osc.start(c.currentTime); osc.stop(c.currentTime+0.38);
+}
 
-      operator = op;
-      expressionEl.textContent = expressionParts.join(' ');
-      highlightOp(op);
-      justEvaluated = true; // next number press starts fresh
-      updateDisplay();
-    }
+function sndResult(valueStr) {
+  if (valueStr==='Error') { sndError(); return; }
+  const num = parseFloat(valueStr);
+  if (isNaN(num)) return;
+  if (num===0) { tone(523.25,0,0.55,'sine',0.2,0.01); return; }
+  const isNeg = num<0, abs = Math.abs(num);
+  const scale = isNeg ? PENTA_MIN : PENTA_MAJ;
+  const idx = Math.floor(abs) % scale.length;
+  const root = scale[idx];
+  const oct = abs>=10000?4 : abs>=1000?2 : abs>=100?1.5 : 1;
+  const n0=root*oct, n1=scale[(idx+2)%scale.length]*oct, n2=scale[(idx+4)%scale.length]*oct;
+  const wave = Number.isInteger(num)?'sine':'triangle';
+  const vol = Math.min(0.22,0.12+abs*0.0005);
+  tone(n0,0,0.28,wave,vol,0.01);
+  tone(n1,0.11,0.26,wave,vol*0.85,0.01);
+  tone(n2,0.22,0.32,wave,vol*0.7,0.01);
+  if (abs>0 && abs%100===0) tone(n2*2,0.33,0.18,'sine',0.1,0.005);
+}
 
-    function pressEquals() {
-      if (stored === null || operator === null) return;
-      clearOpHighlight();
+/* ═══════════════════════════════════════════
+   DISPLAY
+   ═══════════════════════════════════════════ */
+function updateDisplay() {
+  const fmt = formatNumber(current);
+  resultEl.textContent = fmt;
+  const len = fmt.length;
+  resultEl.className = 'result';
+  if (len>=10) resultEl.classList.add('shrink-5');
+  else if (len>=8) resultEl.classList.add('shrink-4');
+  else if (len>=7) resultEl.classList.add('shrink-3');
+  else if (len>=6) resultEl.classList.add('shrink-2');
+  acBtn.textContent = (current==='0' && stored===null) ? 'AC' : 'C';
+}
 
-      const a = parseFloat(stored);
-      const b = parseFloat(current);
-      const expr = formatNumberPlain(a) + ' ' + operator + ' ' + formatNumberPlain(b) + ' =';
-      expressionEl.textContent = expr;
+function formatNumber(val) {
+  if (val==='Error') return 'Error';
+  const num = parseFloat(val);
+  if (isNaN(num)) return val;
+  if (val.endsWith('.')) return formatInt(val.slice(0,-1))+'.';
+  if (val.includes('.')) { const [i,d]=val.split('.'); return formatInt(i)+'.'+d; }
+  if (Math.abs(num)>=1e12) return num.toExponential(5).replace('e+','e');
+  return num.toLocaleString('en-US',{maximumFractionDigits:9});
+}
 
-      const result = compute(a, b, operator);
-      if (result === 'Error') {
-        current = 'Error';
-        stored = null;
-        operator = null;
-      } else {
-        current = formatNumberPlain(result);
-        stored = null;
-        operator = null;
-      }
+function formatInt(s) { const n=parseInt(s,10); return isNaN(n)?s:n.toLocaleString('en-US'); }
 
-      justEvaluated = true;
-      updateDisplay();
-    }
+function clearOpHighlight() { document.querySelectorAll('.btn-op').forEach(b=>b.classList.remove('active')); }
+function highlightOp(op) {
+  clearOpHighlight();
+  const map={'÷':'divide','×':'multiply','−':'minus','+':'plus'};
+  const btn=document.querySelector(`[data-op="${map[op]}"]`);
+  if (btn) btn.classList.add('active');
+}
 
-    function pressAC() {
-      current = '0';
-      stored = null;
-      operator = null;
-      justEvaluated = false;
-      expressionParts = [];
-      expressionEl.textContent = '';
-      clearOpHighlight();
-      updateDisplay();
-    }
+/* ═══════════════════════════════════════════
+   FACT DISPLAY
+   ═══════════════════════════════════════════ */
+function showFact(value) {
+  const fact = getFact(value);
+  if (!fact) { hideFact(); return; }
 
-    function pressPlusMinus() {
-      if (current === '0' || current === 'Error') return;
-      clearOpHighlight();
-      if (current.startsWith('-')) {
-        current = current.slice(1);
-      } else {
-        current = '-' + current;
-      }
-      updateDisplay();
-    }
+  // Determine era label
+  const n = fact.num;
+  let era = 'Anno Domini';
+  if (n === 0) era = 'The Beginning';
+  else if (n < 500) era = 'Ancient World';
+  else if (n < 1000) era = 'Early Middle Ages';
+  else if (n < 1500) era = 'Medieval Era';
+  else if (n < 1800) era = 'Age of Exploration';
+  else if (n < 1900) era = 'The Modern Age';
+  else if (n < 2000) era = 'Twentieth Century';
+  else era = 'Our Times';
 
-    function pressPercent() {
-      if (current === 'Error') return;
-      clearOpHighlight();
-      const val = parseFloat(current);
-      if (stored !== null && operator !== null && (operator === '+' || operator === '−')) {
-        // iPhone behaviour: a + b% = a + (a * b/100)
-        current = formatNumberPlain(parseFloat(stored) * val / 100);
-      } else {
-        current = formatNumberPlain(val / 100);
-      }
-      justEvaluated = false;
-      updateDisplay();
-    }
+  factEraEl.textContent = era;
+  factNumEl.textContent = n;
+  factTextEl.innerHTML  = fact.text;
+  factSrcEl.textContent = fact.source;
 
-    function compute(a, b, op) {
-      switch (op) {
-        case '÷': return b === 0 ? 'Error' : smartRound(a / b);
-        case '×': return smartRound(a * b);
-        case '−': return smartRound(a - b);
-        case '+': return smartRound(a + b);
-        default: return b;
-      }
-    }
+  // Force re-animation
+  factPanel.classList.remove('visible');
+  void factPanel.offsetWidth;
+  // Re-key the animations by replacing nodes
+  const newNum  = factNumEl.cloneNode(false);
+  newNum.textContent = n;
+  factNumEl.parentNode.replaceChild(newNum, factNumEl);
+  const newText = factTextEl.cloneNode(false);
+  newText.innerHTML = fact.text;
+  factTextEl.parentNode.replaceChild(newText, factTextEl);
+  // Re-assign globals (they now point to the old nodes)
+  Object.assign(window, {
+    factNumEl:  document.getElementById('factNum'),
+    factTextEl: document.getElementById('factText'),
+  });
+  factPanel.classList.add('visible');
+}
 
-    function smartRound(n) {
-      if (!isFinite(n)) return 'Error';
-      // Fix floating point issues
-      const rounded = parseFloat(n.toPrecision(12));
-      return rounded;
-    }
+function hideFact() {
+  factPanel.classList.remove('visible');
+}
 
-    function formatNumberPlain(n) {
-      if (n === 'Error') return 'Error';
-      if (!isFinite(n)) return 'Error';
-      // Remove trailing zeros after decimal
-      const s = String(parseFloat(n.toPrecision(12)));
-      return s;
-    }
+/* ═══════════════════════════════════════════
+   BUTTON HANDLERS
+   ═══════════════════════════════════════════ */
+function pressNum(n) {
+  sndDigit(n);
+  clearOpHighlight();
+  if (justEvaluated) { current=n; expressionParts=[]; justEvaluated=false; hideFact(); }
+  else if (current==='0') { current=n; }
+  else {
+    if (current.replace('-','').replace('.','').length>=9) return;
+    current+=n;
+  }
+  updateDisplay();
+}
 
-    // Keyboard support
-    document.addEventListener('keydown', (e) => {
-      if (e.key >= '0' && e.key <= '9') pressNum(e.key);
-      else if (e.key === '.') pressDecimal();
-      else if (e.key === '+') pressOp('+');
-      else if (e.key === '-') pressOp('−');
-      else if (e.key === '*') pressOp('×');
-      else if (e.key === '/') { e.preventDefault(); pressOp('÷'); }
-      else if (e.key === 'Enter' || e.key === '=') pressEquals();
-      else if (e.key === 'Escape') pressAC();
-      else if (e.key === 'Backspace') {
-        if (current.length > 1) { current = current.slice(0, -1); }
-        else { current = '0'; }
-        updateDisplay();
-      }
-      else if (e.key === '%') pressPercent();
-    });
+function pressDecimal() {
+  sndDecimal(); clearOpHighlight();
+  if (justEvaluated) { current='0.'; justEvaluated=false; hideFact(); }
+  else if (!current.includes('.')) current+='.';
+  updateDisplay();
+}
 
-    updateDisplay();
-  </script>
+function pressOp(op) {
+  if (current==='Error') return;
+  sndOp(op); justEvaluated=false;
+  if (stored!==null && operator) {
+    const r=compute(parseFloat(stored),parseFloat(current),operator);
+    expressionParts=[formatNumberPlain(r),op]; stored=String(r); current=String(r);
+    if (r==='Error') { current='Error'; updateDisplay(); return; }
+  } else {
+    expressionParts=[formatNumberPlain(parseFloat(current)),op]; stored=current;
+  }
+  operator=op; expressionEl.textContent=expressionParts.join(' ');
+  highlightOp(op); justEvaluated=true; updateDisplay();
+}
+
+function pressEquals() {
+  if (stored===null||operator===null) return;
+  clearOpHighlight();
+  const a=parseFloat(stored), b=parseFloat(current);
+  expressionEl.textContent=formatNumberPlain(a)+' '+operator+' '+formatNumberPlain(b)+' =';
+  const result=compute(a,b,operator);
+  if (result==='Error') { current='Error'; stored=null; operator=null; }
+  else { current=formatNumberPlain(result); stored=null; operator=null; }
+  sndResult(current);
+  justEvaluated=true;
+  updateDisplay();
+  showFact(current);
+}
+
+function pressAC() {
+  sndClear(); current='0'; stored=null; operator=null;
+  justEvaluated=false; expressionParts=[];
+  expressionEl.textContent=''; clearOpHighlight();
+  hideFact(); updateDisplay();
+}
+
+function pressPlusMinus() {
+  if (current==='0'||current==='Error') return;
+  sndFlip(); clearOpHighlight();
+  current=current.startsWith('-')?current.slice(1):'-'+current;
+  updateDisplay();
+}
+
+function pressPercent() {
+  if (current==='Error') return;
+  sndPercent(); clearOpHighlight();
+  const val=parseFloat(current);
+  if (stored!==null&&operator&&(operator==='+'||operator==='−'))
+    current=formatNumberPlain(parseFloat(stored)*val/100);
+  else current=formatNumberPlain(val/100);
+  justEvaluated=false; updateDisplay();
+}
+
+/* ═══════════════════════════════════════════
+   MATH
+   ═══════════════════════════════════════════ */
+function compute(a,b,op) {
+  if (op==='÷') return b===0?'Error':smartRound(a/b);
+  if (op==='×') return smartRound(a*b);
+  if (op==='−') return smartRound(a-b);
+  if (op==='+') return smartRound(a+b);
+  return b;
+}
+function smartRound(n) { if (!isFinite(n)) return 'Error'; return parseFloat(n.toPrecision(12)); }
+function formatNumberPlain(n) { if (n==='Error'||!isFinite(n)) return 'Error'; return String(parseFloat(n.toPrecision(12))); }
+
+/* ═══════════════════════════════════════════
+   KEYBOARD
+   ═══════════════════════════════════════════ */
+document.addEventListener('keydown', e=>{
+  if (e.key>='0'&&e.key<='9') pressNum(e.key);
+  else if (e.key==='.') pressDecimal();
+  else if (e.key==='+') pressOp('+');
+  else if (e.key==='-') pressOp('−');
+  else if (e.key==='*') pressOp('×');
+  else if (e.key==='/') { e.preventDefault(); pressOp('÷'); }
+  else if (e.key==='Enter'||e.key==='=') pressEquals();
+  else if (e.key==='Escape') pressAC();
+  else if (e.key==='Backspace') { current=current.length>1?current.slice(0,-1):'0'; updateDisplay(); }
+  else if (e.key==='%') pressPercent();
+});
+
+/* ═══════════════════════════════════════════
+   FLOATING DUST PARTICLES
+   ═══════════════════════════════════════════ */
+(function spawnDust() {
+  for (let i=0; i<18; i++) {
+    const d = document.createElement('div');
+    d.className = 'dust';
+    const size = 1+Math.random()*3;
+    d.style.cssText = `
+      left:${Math.random()*100}%;
+      bottom:${Math.random()*40}%;
+      width:${size}px; height:${size}px;
+      animation-duration:${6+Math.random()*12}s;
+      animation-delay:${-Math.random()*14}s;
+      opacity:${0.2+Math.random()*0.5};
+    `;
+    document.body.appendChild(d);
+  }
+})();
+
+updateDisplay();
+</script>
 </body>
 </html>

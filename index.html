@@ -841,8 +841,8 @@ const expressionEl = document.getElementById('expression');
 const acBtn        = document.getElementById('btn-ac');
 const factPanel    = document.getElementById('factPanel');
 const factEraEl    = document.getElementById('factEra');
-const factNumEl    = document.getElementById('factNum');
-const factTextEl   = document.getElementById('factText');
+let factNumEl      = document.getElementById('factNum');
+let factTextEl     = document.getElementById('factText');
 const factSrcEl    = document.getElementById('factSource');
 
 /* ═══════════════════════════════════════════
@@ -997,18 +997,16 @@ function showFact(value) {
   // Force re-animation
   factPanel.classList.remove('visible');
   void factPanel.offsetWidth;
-  // Re-key the animations by replacing nodes
+  // Re-key the animations: clone nodes to restart @keyframes, update let refs
   const newNum  = factNumEl.cloneNode(false);
   newNum.textContent = n;
   factNumEl.parentNode.replaceChild(newNum, factNumEl);
+  factNumEl = newNum;                            // keep let ref in sync
+
   const newText = factTextEl.cloneNode(false);
   newText.innerHTML = fact.text;
   factTextEl.parentNode.replaceChild(newText, factTextEl);
-  // Re-assign globals (they now point to the old nodes)
-  Object.assign(window, {
-    factNumEl:  document.getElementById('factNum'),
-    factTextEl: document.getElementById('factText'),
-  });
+  factTextEl = newText;                          // keep let ref in sync
   factPanel.classList.add('visible');
 }
 

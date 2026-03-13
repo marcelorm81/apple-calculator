@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Calculator</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    body {
+      background: #1c1c1e;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", sans-serif;
+    }
+
+    .calculator {
+      background: #000;
+      border-radius: 54px;
+      width: 428px;
+      padding: 0 17px 17px;
+      box-shadow:
+        0 0 0 1px rgba(255,255,255,0.08),
+        0 40px 80px rgba(0,0,0,0.8),
+        0 20px 40px rgba(0,0,0,0.5);
+      overflow: hidden;
+    }
+
+    /* Display */
+    .display {
+      padding: 120px 14px 24px;
+      text-align: right;
+      min-height: 240px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      align-items: flex-end;
+    }
+
+    .expression {
+      font-size: 22px;
+      color: rgba(255,255,255,0.45);
+      font-weight: 300;
+      min-height: 28px;
+      margin-bottom: 4px;
+      letter-spacing: -0.3px;
+      transition: opacity 0.15s;
+    }
+
+    .result {
+      font-size: 90px;
+      font-weight: 300;
+      color: #fff;
+      line-height: 1;
+      letter-spacing: -3px;
+      transition: font-size 0.12s ease;
+      word-break: break-all;
+    }
+
+    .result.shrink-2 { font-size: 72px; letter-spacing: -2px; }
+    .result.shrink-3 { font-size: 56px; letter-spacing: -1px; }
+    .result.shrink-4 { font-size: 44px; letter-spacing: -0.5px; }
+    .result.shrink-5 { font-size: 36px; letter-spacing: 0; }
+
+    /* Button grid */
+    .buttons {
+      display: grid;
+      grid-template-columns: repeat(4, 88px);
+      grid-template-rows: repeat(5, 88px);
+      gap: 14px;
+    }
+
+    .btn {
+      border: none;
+      cursor: pointer;
+      border-radius: 50%;
+      font-family: inherit;
+      font-size: 40px;
+      font-weight: 400;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: filter 0.08s ease, transform 0.08s ease;
+      position: relative;
+      overflow: hidden;
+      outline: none;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .btn:active {
+      filter: brightness(1.35);
+      transform: scale(0.94);
+    }
+
+    /* Number buttons */
+    .btn-num {
+      background: #333;
+      color: #fff;
+    }
+
+    /* Function buttons (AC, +/-, %) */
+    .btn-func {
+      background: #a5a5a5;
+      color: #000;
+    }
+
+    /* Operator buttons */
+    .btn-op {
+      background: #f1a33b;
+      color: #fff;
+    }
+
+    /* Active operator (when selected) */
+    .btn-op.active {
+      background: #fff;
+      color: #f1a33b;
+    }
+
+    /* 0 button — pill shape spanning 2 columns */
+    .btn-zero {
+      grid-column: span 2;
+      border-radius: 44px;
+      justify-content: flex-start;
+      padding-left: 35px;
+      font-size: 40px;
+    }
+
+    /* Operator symbols */
+    .btn[data-op="divide"] { font-size: 46px; }
+    .btn[data-op="multiply"] { font-size: 36px; }
+    .btn[data-op="minus"] { font-size: 48px; line-height: 0.8; }
+    .btn[data-op="plus"] { font-size: 48px; }
+    .btn[data-op="equals"] { font-size: 48px; }
+
+    /* Decimal comma */
+    .btn-decimal { font-size: 44px; font-weight: 700; }
+
+    /* Shimmer gradient animation */
+    @keyframes shimmer {
+      0%   { background-position: 200% 200%; }
+      50%  { background-position: -50% -50%; }
+      100% { background-position: 200% 200%; }
+    }
+
+    .btn::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      background: linear-gradient(
+        130deg,
+        transparent 0%,
+        transparent 38%,
+        rgba(255,255,255,0.13) 50%,
+        transparent 62%,
+        transparent 100%
+      );
+      background-size: 300% 300%;
+      animation: shimmer 4s ease-in-out infinite;
+      pointer-events: none;
+      transition: opacity 0.08s;
+    }
+
+    .btn:active::after {
+      background: rgba(255,255,255,0.14);
+      animation: none;
+    }
+    .btn-func:active::after {
+      background: rgba(0,0,0,0.1);
+      animation: none;
+    }
+
+    @media (max-width: 460px) {
+      .calculator {
+        width: 100vw;
+        border-radius: 0;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+      }
+      .display { padding-top: 60px; }
+      .buttons {
+        grid-template-columns: repeat(4, 1fr);
+        grid-template-rows: repeat(5, auto);
+        gap: calc((100vw - 32px) * 0.04);
+        padding-bottom: 20px;
+      }
+      .btn {
+        aspect-ratio: 1;
+        font-size: 8vw;
+        width: 100%;
+        border-radius: 50%;
+      }
+      .btn-zero {
+        aspect-ratio: auto;
+        height: calc((100vw - 32px) / 4);
+        font-size: 8vw;
+      }
+      .result { font-size: min(90px, 20vw); }
+    }
+  </style>
+</head>
+<body>
+  <div class="calculator">
+    <div class="display">
+      <div class="expression" id="expression"></div>
+      <div class="result" id="result">0</div>
+    </div>
+    <div class="buttons">
+      <!-- Row 1 -->
+      <button class="btn btn-func" id="btn-ac" onclick="pressAC()">AC</button>
+      <button class="btn btn-func" onclick="pressPlusMinus()">
+        <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <!-- + top left -->
+          <text x="2" y="19" font-family="-apple-system,BlinkMacSystemFont,sans-serif" font-size="15" font-weight="500" fill="#000">+</text>
+          <!-- / diagonal center -->
+          <line x1="14" y1="34" x2="26" y2="6" stroke="#000" stroke-width="2.2" stroke-linecap="round"/>
+          <!-- - bottom right -->
+          <text x="23" y="37" font-family="-apple-system,BlinkMacSystemFont,sans-serif" font-size="20" font-weight="400" fill="#000">−</text>
+        </svg>
+      </button>
+      <button class="btn btn-func" onclick="pressPercent()">%</button>
+      <button class="btn btn-op" data-op="divide" onclick="pressOp('÷')">÷</button>
+
+      <!-- Row 2 -->
+      <button class="btn btn-num" onclick="pressNum('7')">7</button>
+      <button class="btn btn-num" onclick="pressNum('8')">8</button>
+      <button class="btn btn-num" onclick="pressNum('9')">9</button>
+      <button class="btn btn-op" data-op="multiply" onclick="pressOp('×')">×</button>
+
+      <!-- Row 3 -->
+      <button class="btn btn-num" onclick="pressNum('4')">4</button>
+      <button class="btn btn-num" onclick="pressNum('5')">5</button>
+      <button class="btn btn-num" onclick="pressNum('6')">6</button>
+      <button class="btn btn-op" data-op="minus" onclick="pressOp('−')">−</button>
+
+      <!-- Row 4 -->
+      <button class="btn btn-num" onclick="pressNum('1')">1</button>
+      <button class="btn btn-num" onclick="pressNum('2')">2</button>
+      <button class="btn btn-num" onclick="pressNum('3')">3</button>
+      <button class="btn btn-op" data-op="plus" onclick="pressOp('+')">+</button>
+
+      <!-- Row 5 -->
+      <button class="btn btn-num btn-zero" onclick="pressNum('0')">0</button>
+      <button class="btn btn-num btn-decimal" onclick="pressDecimal()">.</button>
+      <button class="btn btn-op" data-op="equals" onclick="pressEquals()">=</button>
+    </div>
+  </div>
+
+  <script>
+    let current = '0';
+    let stored = null;
+    let operator = null;
+    let justEvaluated = false;
+    let expressionParts = [];
+
+    const resultEl = document.getElementById('result');
+    const expressionEl = document.getElementById('expression');
+    const acBtn = document.getElementById('btn-ac');
+
+    function updateDisplay() {
+      resultEl.textContent = formatNumber(current);
+
+      // Adjust font size based on length
+      const len = formatNumber(current).length;
+      resultEl.className = 'result';
+      if (len >= 10) resultEl.classList.add('shrink-5');
+      else if (len >= 8) resultEl.classList.add('shrink-4');
+      else if (len >= 7) resultEl.classList.add('shrink-3');
+      else if (len >= 6) resultEl.classList.add('shrink-2');
+
+      // AC vs C
+      acBtn.textContent = (current === '0' && stored === null) ? 'AC' : 'C';
+    }
+
+    function formatNumber(val) {
+      if (val === 'Error') return 'Error';
+      const num = parseFloat(val);
+      if (isNaN(num)) return val;
+
+      // Check if it has decimal in current string
+      const hasDecimal = val.includes('.');
+      const isTrailingDot = val.endsWith('.');
+
+      if (isTrailingDot) {
+        return formatInt(val.slice(0, -1)) + '.';
+      }
+
+      if (hasDecimal) {
+        const [intPart, decPart] = val.split('.');
+        return formatInt(intPart) + '.' + decPart;
+      }
+
+      // Integer — use locale for thousand separators but keep it clean
+      if (Math.abs(num) >= 1e12) {
+        return num.toExponential(5).replace('e+', 'e');
+      }
+      return num.toLocaleString('en-US', { maximumFractionDigits: 9 }).replace(/,/g, ',');
+    }
+
+    function formatInt(s) {
+      const num = parseInt(s, 10);
+      if (isNaN(num)) return s;
+      return num.toLocaleString('en-US');
+    }
+
+    function clearOpHighlight() {
+      document.querySelectorAll('.btn-op').forEach(b => b.classList.remove('active'));
+    }
+
+    function highlightOp(op) {
+      clearOpHighlight();
+      const map = { '÷': 'divide', '×': 'multiply', '−': 'minus', '+': 'plus' };
+      const key = map[op];
+      if (key) {
+        const btn = document.querySelector(`[data-op="${key}"]`);
+        if (btn) btn.classList.add('active');
+      }
+    }
+
+    function pressNum(n) {
+      clearOpHighlight();
+      if (justEvaluated) {
+        current = n;
+        expressionParts = [];
+        justEvaluated = false;
+      } else if (current === '0') {
+        current = n;
+      } else {
+        if (current.replace('-', '').replace('.', '').length >= 9) return;
+        current += n;
+      }
+      updateDisplay();
+    }
+
+    function pressDecimal() {
+      clearOpHighlight();
+      if (justEvaluated) {
+        current = '0.';
+        justEvaluated = false;
+      } else if (!current.includes('.')) {
+        current += '.';
+      }
+      updateDisplay();
+    }
+
+    function pressOp(op) {
+      if (current === 'Error') return;
+      justEvaluated = false;
+
+      if (stored !== null && operator && !justEvaluated) {
+        const result = compute(parseFloat(stored), parseFloat(current), operator);
+        expressionParts = [formatNumberPlain(result), op];
+        stored = String(result);
+        current = String(result);
+        if (result === 'Error') { current = 'Error'; updateDisplay(); return; }
+      } else {
+        expressionParts = [formatNumberPlain(parseFloat(current)), op];
+        stored = current;
+      }
+
+      operator = op;
+      expressionEl.textContent = expressionParts.join(' ');
+      highlightOp(op);
+      justEvaluated = true; // next number press starts fresh
+      updateDisplay();
+    }
+
+    function pressEquals() {
+      if (stored === null || operator === null) return;
+      clearOpHighlight();
+
+      const a = parseFloat(stored);
+      const b = parseFloat(current);
+      const expr = formatNumberPlain(a) + ' ' + operator + ' ' + formatNumberPlain(b) + ' =';
+      expressionEl.textContent = expr;
+
+      const result = compute(a, b, operator);
+      if (result === 'Error') {
+        current = 'Error';
+        stored = null;
+        operator = null;
+      } else {
+        current = formatNumberPlain(result);
+        stored = null;
+        operator = null;
+      }
+
+      justEvaluated = true;
+      updateDisplay();
+    }
+
+    function pressAC() {
+      current = '0';
+      stored = null;
+      operator = null;
+      justEvaluated = false;
+      expressionParts = [];
+      expressionEl.textContent = '';
+      clearOpHighlight();
+      updateDisplay();
+    }
+
+    function pressPlusMinus() {
+      if (current === '0' || current === 'Error') return;
+      clearOpHighlight();
+      if (current.startsWith('-')) {
+        current = current.slice(1);
+      } else {
+        current = '-' + current;
+      }
+      updateDisplay();
+    }
+
+    function pressPercent() {
+      if (current === 'Error') return;
+      clearOpHighlight();
+      const val = parseFloat(current);
+      if (stored !== null && operator !== null && (operator === '+' || operator === '−')) {
+        // iPhone behaviour: a + b% = a + (a * b/100)
+        current = formatNumberPlain(parseFloat(stored) * val / 100);
+      } else {
+        current = formatNumberPlain(val / 100);
+      }
+      justEvaluated = false;
+      updateDisplay();
+    }
+
+    function compute(a, b, op) {
+      switch (op) {
+        case '÷': return b === 0 ? 'Error' : smartRound(a / b);
+        case '×': return smartRound(a * b);
+        case '−': return smartRound(a - b);
+        case '+': return smartRound(a + b);
+        default: return b;
+      }
+    }
+
+    function smartRound(n) {
+      if (!isFinite(n)) return 'Error';
+      // Fix floating point issues
+      const rounded = parseFloat(n.toPrecision(12));
+      return rounded;
+    }
+
+    function formatNumberPlain(n) {
+      if (n === 'Error') return 'Error';
+      if (!isFinite(n)) return 'Error';
+      // Remove trailing zeros after decimal
+      const s = String(parseFloat(n.toPrecision(12)));
+      return s;
+    }
+
+    // Keyboard support
+    document.addEventListener('keydown', (e) => {
+      if (e.key >= '0' && e.key <= '9') pressNum(e.key);
+      else if (e.key === '.') pressDecimal();
+      else if (e.key === '+') pressOp('+');
+      else if (e.key === '-') pressOp('−');
+      else if (e.key === '*') pressOp('×');
+      else if (e.key === '/') { e.preventDefault(); pressOp('÷'); }
+      else if (e.key === 'Enter' || e.key === '=') pressEquals();
+      else if (e.key === 'Escape') pressAC();
+      else if (e.key === 'Backspace') {
+        if (current.length > 1) { current = current.slice(0, -1); }
+        else { current = '0'; }
+        updateDisplay();
+      }
+      else if (e.key === '%') pressPercent();
+    });
+
+    updateDisplay();
+  </script>
+</body>
+</html>

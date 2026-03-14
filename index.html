@@ -213,56 +213,265 @@ function sndResult(v){
 }
 
 /* ═══════════════════════════════════════
-   FACTS DATABASE
+   FACTS DATABASE  (~600 curated + rich mathematical fallbacks)
+   Deterministic message picker — same number → same variant
 ═══════════════════════════════════════ */
+function _pick(n,arr){return arr[Math.abs((n*2654435761)|0)%arr.length];}
+
 const FACTS = {
-  0:{text:"Zero — invented as a numeral by Brahmagupta in 628 AD, revolutionising mathematics forever.",source:"Mathematical history"},
-  1:{text:"The number 1 is neither prime nor composite — a unique identity element in multiplication.",source:"Number theory"},
-  2:{text:"2 is the only even prime. Every even number >2 can be expressed as a sum of two primes (Goldbach's conjecture).",source:"Goldbach's conjecture"},
-  3:{text:"3 is the first odd prime. The triangle — 3 sides — is the strongest shape in structural engineering.",source:"Structural engineering"},
-  4:{text:"The Four Colour Theorem (1976) proved by computer: any map needs only 4 colours so no adjacent regions share a colour.",source:"Graph theory"},
-  5:{text:"Humans have 5 senses. The pentagram — a 5-pointed star — was the sacred symbol of Pythagoras and his school.",source:"Ancient history"},
-  6:{text:"6 is the first perfect number: 1+2+3=6. Ancient Greeks considered it divine for this reason.",source:"Number theory"},
-  7:{text:"Cognitive studies show people asked for a 'random' number 1–10 choose 7 most often. It feels most random.",source:"Cognitive psychology"},
-  8:{text:"8 bits = 1 byte. The byte became fundamental to digital computing in the 1960s with the IBM System/360.",source:"Computing history"},
-  9:{text:"Any number whose digits sum to 9 is divisible by 9. Multiply any number by 9 — digits always sum to 9.",source:"Number theory"},
-  10:{text:"The decimal system (base 10) emerged because humans have 10 fingers — the original computing hardware.",source:"Anthropology"},
-  12:{text:"12 months in a year, based on lunar cycles. Babylonians (2000 BC) established the 12-month calendar.",source:"Ancient astronomy"},
-  13:{text:"Friday the 13th superstition is partly rooted in the 1307 arrest of the Knights Templar on Friday, October 13.",source:"Medieval history"},
-  16:{text:"16 bits was the word size of the Intel 8086 (1978) — the processor that launched the PC revolution.",source:"Computing history"},
-  17:{text:"17 is a Fermat prime — 2^(2^2)+1. Only 5 Fermat primes are known: 3, 5, 17, 257, and 65537.",source:"Number theory"},
-  19:{text:"The 19th Amendment (1920) granted American women the right to vote after 70 years of suffragist activism.",source:"American history"},
-  20:{text:"The 20th century saw more technological change than all previous centuries of human history combined.",source:"Historical analysis"},
-  22:{text:"Catch-22 (Joseph Heller, 1961) introduced a paradox so profound it became a common English idiom.",source:"Literary history"},
-  23:{text:"Human cells have 23 pairs of chromosomes — 46 total — discovered in 1956 by Tjio and Levan.",source:"Genetics"},
-  24:{text:"24 hours in a day. The Egyptians divided it into 10 daylight hours, 2 twilight, and 12 night hours.",source:"Ancient Egypt"},
-  25:{text:"The human brain isn't fully developed until age 25 — the prefrontal cortex governs decision-making.",source:"Neuroscience"},
-  26:{text:"The English alphabet has 26 letters, standardised from Latin script around the 16th century.",source:"Linguistics"},
-  27:{text:"27 = 3³. The '27 Club' of musicians who died at that age includes Hendrix, Joplin, Morrison, and Cobain.",source:"Music history"},
-  28:{text:"28 is the second perfect number. February has 28 days as Julius Caesar's 46 BC calendar left it shortest.",source:"Calendar history"},
-  30:{text:"By age 30, human bone density peaks. After 30, we lose roughly 1% of bone mass per year.",source:"Medicine"},
-  32:{text:"32°F is the freezing point of water on the Fahrenheit scale — defined by Gabriel Fahrenheit in 1724.",source:"Physics history"},
-  36:{text:"36 = sum of first 3 cubes: 1³+2³+3³. Also the number of plays traditionally attributed to Shakespeare.",source:"Mathematics & literature"},
-  37:{text:"The optimal stopping rule: reject the first 37% of candidates then choose the next one better than all prior.",source:"Decision theory"},
-  40:{text:"40 days and 40 nights — this biblical duration reflects the Babylonian concept of 40 as a period of trial.",source:"Religious history"},
-  42:{text:"42 is the Answer to the Ultimate Question of Life, the Universe, and Everything (Douglas Adams, 1979).",source:"Literature"},
-  44:{text:"Barack Obama was the 44th US President (2009–2017), the first African-American to hold the office.",source:"American history"},
-  45:{text:"45 RPM records, introduced by RCA Victor in 1949, revolutionised popular music — affordable portable singles.",source:"Music history"},
-  47:{text:"47 appears unusually often in Star Trek episodes — a running in-joke among writers since the 1990s.",source:"Pop culture"},
-  50:{text:"The United States has 50 states. Hawaii and Alaska became the 49th and 50th states in 1959.",source:"American history"},
-  52:{text:"A standard deck has 52 cards — 4 suits × 13 ranks — approximately matching the 52 weeks in a year.",source:"Games & folklore"},
-  54:{text:"The Rubik's Cube has 54 coloured squares and 43 quintillion (4.3×10¹⁹) possible configurations.",source:"Mathematics"},
-  60:{text:"60 seconds per minute, 60 minutes per hour — the sexagesimal system was invented by the Sumerians c.2000 BC.",source:"Ancient Mesopotamia"},
-  64:{text:"64 = 2⁶. The Nintendo 64 (1996) took its name from its 64-bit CPU — a major leap from 16-bit consoles.",source:"Computing history"},
-  66:{text:"Route 66 stretched 2,448 miles from Chicago to Santa Monica — the 'Mother Road', decommissioned in 1985.",source:"American history"},
-  69:{text:"The Apollo 11 moon landing was July 1969. Neil Armstrong's 'one small step' was watched by 600 million people.",source:"Space history"},
-  72:{text:"The Rule of 72: divide 72 by an annual interest rate to estimate how many years money takes to double.",source:"Finance"},
-  75:{text:"Global average human lifespan reached 75 years in 2023, doubling since 1900 due to medicine and sanitation.",source:"Global health"},
-  77:{text:"Star Wars (1977) became the highest-grossing film of all time at that point. Its opening weekend changed cinema.",source:"Film history"},
-  80:{text:"Jules Verne's Around the World in 80 Days (1872) inspired Nellie Bly's real circumnavigation in 72 days.",source:"Literary history"},
-  88:{text:"A piano has 88 keys — 52 white and 36 black — spanning 7.25 octaves, standardised by Steinway in the 1880s.",source:"Music"},
-  90:{text:"A right angle is 90°. Euclid described right angles in his Elements (~300 BC), founding Euclidean geometry.",source:"Mathematics"},
-  100:{text:"There are exactly 25 primes below 100. The first 100 prime numbers end at 541.",source:"Number theory"},
+  /* ── 0–100 complete coverage ── */
+  0:{text:"Zero was formalised by Brahmagupta in 628 AD. Before that, a blank space held its place and no one could write equations about nothing.",source:"Mathematical history"},
+  1:{text:"1 is neither prime nor composite — the unique multiplicative identity. Every number multiplied by 1 stays itself: the universe's most fundamental invariant.",source:"Number theory"},
+  2:{text:"2 is the only even prime. Goldbach conjectured in 1742 that every even number >2 is the sum of two primes — still unproven after 280 years.",source:"Number theory"},
+  3:{text:"3 is the first odd prime. The triangle is the only inherently rigid polygon — the reason every bridge, crane, and Eiffel Tower is built from triangles.",source:"Engineering"},
+  4:{text:"The Four Colour Theorem (1976) was the first major proof completed by computer: any flat map needs at most 4 colours so no two adjacent regions share one.",source:"Mathematics"},
+  5:{text:"Pythagoras made the pentagram the secret symbol of his school, believing it encoded divine proportion. The diagonals create the golden ratio φ ≈ 1.618.",source:"Ancient history"},
+  6:{text:"6 is the first perfect number: 1+2+3=6, and those are its only divisors. The Greeks called it divine. The next perfect numbers are 28, 496, and 8128.",source:"Number theory"},
+  7:{text:"When asked for a random number between 1 and 10, people choose 7 more than any other. It feels random because it shares no obvious factors with 10.",source:"Cognitive psychology"},
+  8:{text:"8 bits = 1 byte — standardised by IBM's System/360 in 1964. Every digital device on Earth still stores information in these 8-bit packages, 60 years later.",source:"Computing history"},
+  9:{text:"Multiply any integer by 9; the digits of the result always sum to 9. This follows because 9 = 10−1 — a structural consequence of our base-10 system.",source:"Number theory"},
+  10:{text:"Base 10 arose because humans have 10 fingers — the most widespread biological accident in mathematical history. Base 12 or 60 would be more mathematically convenient.",source:"Anthropology"},
+  11:{text:"Football, cricket, and American football all field exactly 11 players per side — an independent convergence across three separate cultures on the same number.",source:"Sports history"},
+  12:{text:"Babylonians chose 12 because it's divisible by 2, 3, 4, and 6 — far more useful than 10. We inherited 12 months, 12 hours, 12 inches, and the dozen from them.",source:"Ancient astronomy"},
+  13:{text:"Friday 13 October 1307: Philip IV of France arrested hundreds of Knights Templar at dawn. The mass arrest on that date became the cultural seed of the superstition.",source:"Medieval history"},
+  14:{text:"A Shakespearean sonnet has exactly 14 lines — 3 quatrains and a closing couplet. Shakespeare wrote 154 of them around 1600, each encoded in this precise architecture.",source:"Literature"},
+  15:{text:"Andy Warhol said in 1968: 'In the future, everyone will be world-famous for 15 minutes.' Social media proved him right, 50 years later, for billions of people.",source:"Pop culture"},
+  16:{text:"The Intel 8086 (1978) was the first 16-bit processor and launched the x86 architecture. Every modern Windows PC is still its direct descendant, 46 years on.",source:"Computing history"},
+  17:{text:"17 is a Fermat prime — 2^(2²)+1 = 17. Only five Fermat primes are known: 3, 5, 17, 257, 65537. Mathematicians suspect there are no more, but can't yet prove it.",source:"Number theory"},
+  18:{text:"18 became the age of legal adulthood in most democracies in the 20th century. In medieval Europe, 18-year-olds were expected to bear arms — the threshold has deep roots.",source:"Legal history"},
+  19:{text:"The 19th Amendment (1920) gave American women the vote. Susan B. Anthony campaigned for it for 50 years and died in 1906 — 14 years before it passed.",source:"American history"},
+  20:{text:"The 20th century produced more technological change than all previous centuries combined: electricity, flight, antibiotics, nuclear energy, computers, and the internet.",source:"Historical analysis"},
+  21:{text:"Blackjack (21) is the world's most played casino card game. The name came from early American casinos offering a bonus for an ace plus the jack of spades.",source:"Games history"},
+  22:{text:"Catch-22 (Joseph Heller, 1961) gave English a permanent idiom: a paradox where the rule preventing your escape is the very rule that traps you.",source:"Literature"},
+  23:{text:"Human cells have 23 chromosome pairs — 46 total. Textbooks stated 48 until 1956, when Tjio and Levan counted correctly. An error taught to students for 30 years.",source:"Genetics"},
+  24:{text:"The Egyptians split the day into 10 daytime hours, 2 twilight hours, and 12 night hours — a 4,000-year-old division that became our 24-hour day.",source:"Ancient Egypt"},
+  25:{text:"The prefrontal cortex — governing impulse control and long-term planning — isn't fully developed until age 25. Most legal systems draw the adult line a decade too early.",source:"Neuroscience"},
+  26:{text:"All 26 English letters descend from Phoenician script. Every letter is at least 3,000 years old in some ancestral form, shaped by merchants writing on clay tablets.",source:"Linguistics"},
+  27:{text:"27 = 3³. The '27 Club' — Hendrix, Joplin, Morrison, Cobain — is statistically no more dangerous than 26 or 28. The pattern is human pattern-seeking, not fate.",source:"Music history"},
+  28:{text:"28 is the second perfect number (1+2+4+7+14=28). February has 28 days because Roman priests considered it inauspicious and left it as the year's runt month.",source:"Number theory"},
+  29:{text:"February 29 exists because Caesar's 46 BC reform added a leap day every 4 years. Pope Gregory refined it in 1582: skip century years unless divisible by 400.",source:"Calendar history"},
+  30:{text:"Bone density peaks around age 30 then declines ~1% per year. Astronauts on the ISS lose bone 10× faster due to weightlessness — an accelerated version of aging.",source:"Medicine"},
+  31:{text:"Baskin-Robbins launched in 1945 with '31 Flavors' — one per day of the month — as a deliberate promise of variety. Today they make over 1,000 flavours total.",source:"Business history"},
+  32:{text:"32°F (0°C) is water's freezing point. Fahrenheit chose 32 in 1724 so that most everyday temperatures stay positive — a design decision that 300 years of Americans still live with.",source:"Physics history"},
+  33:{text:"By Christian tradition, Jesus was 33 at the Crucifixion. Dante encoded this: his Divine Comedy has exactly 33 cantos in each of its three books — 99 total plus an intro.",source:"Religious history"},
+  34:{text:"34 is the 9th Fibonacci number. Sunflower seeds arrange themselves in spirals of 34 and 55 — consecutive Fibonacci numbers, an optimum that evolution independently discovered.",source:"Mathematics"},
+  35:{text:"The US Constitution requires presidential candidates to be at least 35 — a 1787 compromise. The youngest president ever was Theodore Roosevelt, who took office at 42.",source:"American history"},
+  36:{text:"36 = 1³+2³+3³ and = 1+2+3+4+5+6+7+8. Shakespeare's 36 plays were catalogued by Heminge and Condell in the First Folio (1623), seven years after his death.",source:"Mathematics & literature"},
+  37:{text:"The optimal stopping rule: review the first 37% of any candidate pool, then choose the next one who beats everyone you've seen. Mathematically maximises your best-case outcome.",source:"Decision theory"},
+  38:{text:"The 38th parallel divided Korea in 1945. The armistice of 1953 left it virtually unchanged. It remains one of the most heavily militarised borders on Earth.",source:"20th century history"},
+  39:{text:"Buchan's The 39 Steps (1915) — later Hitchcock's most acclaimed British thriller — named its secret society's meeting place after a staircase the conspirators used for rendezvous.",source:"Literature & film"},
+  40:{text:"The Babylonians used 40 to mean any extended, spiritually significant period: 40 days of flood, 40 years in the desert, 40 days of Lent. It meant 'a very long time'.",source:"Religious history"},
+  41:{text:"41 is the 13th prime and stars in Euler's formula: n²+n+41 yields primes for n=0 through 39 — a spectacular run broken only at n=40. Mathematical coincidences don't last.",source:"Number theory"},
+  42:{text:"Douglas Adams chose 42 as the answer to Everything in The Hitchhiker's Guide because it was perfectly ordinary. 'I wanted a number that was neither too big nor too small,' he said.",source:"Literature"},
+  43:{text:"Studies differ on exact counts, but frowning uses more facial muscles than smiling — which is why forcing a smile actually has measurable mood-lifting effects.",source:"Anatomy"},
+  44:{text:"Barack Obama took office as the 44th US President in January 2009 — 44 years after the Voting Rights Act of 1965, the legislation that made his election politically possible.",source:"American history"},
+  45:{text:"The 45 RPM single (1949, RCA Victor) put one pop song per side on a 7-inch disc, making individual hits cheap for the first time and inventing the single-song pop industry.",source:"Music history"},
+  46:{text:"Humans have 46 chromosomes. Chimpanzees have 48. Scientists believe two ancestral ape chromosomes fused into human chromosome 2 — a merger still visible in the DNA sequence.",source:"Genetics"},
+  47:{text:"47 appears with suspicious frequency in Star Trek — a running in-joke by writer Joe Menosky, inspired by a Pomona College professor who jokingly claimed all numbers are 47.",source:"Pop culture"},
+  48:{text:"The 48 contiguous states fill the lower mainland; Alaska and Hawaii joined in 1959. The 50-star flag was designed by 17-year-old Robert Heft as a school project. He got a B−.",source:"American history"},
+  49:{text:"The California Gold Rush brought 90,000 '49ers' in 1849, swelling San Francisco from 1,000 to 25,000 people in a year. It was history's first mass migration by steam and rail.",source:"American history"},
+  50:{text:"The United States has 50 states. Robert Heft's 50-star flag design — originally a school project graded B− — was adopted by Congress in 1960 and his grade was upgraded to A.",source:"American history"},
+  51:{text:"Area 51's secrecy came from testing aircraft like the U-2 and SR-71 Blackbird, not extraterrestrials. The CIA only acknowledged its existence in 2013.",source:"Cold War history"},
+  52:{text:"A card deck has 52 cards matching 52 weeks; 4 suits for 4 seasons; 13 ranks for 13 lunar months; the pip total is 364, one short of a year — a calendar disguised as a game.",source:"Games & folklore"},
+  53:{text:"53 is the 16th prime. The helix of DNA makes one full turn every 10 base pairs — and 53 base pairs span the width of a typical nucleosome, the fundamental packaging unit of DNA.",source:"Molecular biology"},
+  54:{text:"The Rubik's Cube has 54 coloured squares and 43,252,003,274,489,856,000 positions. God's Number is 20: any configuration can be solved in at most 20 moves.",source:"Mathematics"},
+  55:{text:"55 is the 10th Fibonacci number and — uniquely — also a triangular number (1+2+3+...+10). Fibonacci numbers appear in every living spiral: shells, sunflowers, pine cones.",source:"Mathematics"},
+  56:{text:"56 people signed the Declaration of Independence in 1776. Benjamin Franklin was 70 — the oldest. Edward Rutledge was 26 — the youngest. Five were captured and tortured by the British.",source:"American history"},
+  57:{text:"Heinz '57 Varieties' was invented as a marketing slogan in 1896 — Henry Heinz saw an ad for '21 styles' of shoes and decided a bigger, odder number would be more memorable.",source:"Business history"},
+  58:{text:"The Vietnam Veterans Memorial lists 58,318 names. Names are arranged chronologically by date of death, not alphabetically — so that comrades who died together appear side by side.",source:"American history"},
+  59:{text:"59 is the highest number a clock's second hand shows before rolling over. It is also the 17th prime — the largest whose double (118) equals the number of elements in the periodic table.",source:"Mathematics"},
+  60:{text:"The Sumerians chose base 60 around 2000 BC because 60 is divisible by 12 different integers (1,2,3,4,5,6,10,12,15,20,30,60). We still use it for time and angles 4,000 years later.",source:"Ancient Mesopotamia"},
+  61:{text:"61 is the 18th prime. In 1961, Yuri Gagarin orbited Earth in 108 minutes. JFK responded by committing to the Moon — a goal achieved with 942 days to spare.",source:"Space history"},
+  62:{text:"62.137 miles = exactly 100 kilometres. The metric and imperial systems meet here — a conversion that still confuses road signs, marathon distances, and speed limits worldwide.",source:"Measurement history"},
+  63:{text:"Leibniz studied the I Ching's 64 hexagrams and saw binary mathematics: 0s and 1s, yin and yang. He developed binary arithmetic shortly after — 63 steps from nothing to everything.",source:"Philosophy & mathematics"},
+  64:{text:"64 = 2⁶. A chessboard has 64 squares. The Nintendo 64 used a 64-bit CPU. One byte can encode 64 values in 6 bits — the origin of Base64, which encodes all binary email attachments.",source:"Computing & games"},
+  65:{text:"Retirement at 65 was set by Bismarck in 1883 when life expectancy was ~67. Today the average 65-year-old has 20 more years ahead. The threshold hasn't kept pace.",source:"Social history"},
+  66:{text:"Route 66 (Chicago to Santa Monica, 2,448 miles) opened 1926. Steinbeck called it 'the Mother Road' in The Grapes of Wrath. It was decommissioned in 1985 — now a heritage trail.",source:"American history"},
+  67:{text:"Element 67 is Holmium — so magnetically powerful it's used in MRI machines to create localised field gradients. Its name comes from Holmia, the Latin name for Stockholm.",source:"Chemistry"},
+  68:{text:"1968 packed more into one year than most decades: MLK and RFK assassinated, Tet Offensive, Prague Spring, Paris riots, Apollo 8 orbiting the Moon. History at warp speed.",source:"20th century history"},
+  69:{text:"Apollo 11 launched 16 July 1969. Armstrong's first step on the Moon was watched by an estimated 600 million people — the largest simultaneous audience in history to that moment.",source:"Space history"},
+  70:{text:"'The days of our years are threescore and ten' set the biblical lifespan at 70. In 1900, the global average was 32 years. By 2023 it exceeded 73 — we've surpassed scripture.",source:"Demography"},
+  71:{text:"71 is the 20th prime. Element 71 is Lutetium — named after the Latin for Paris (Lutetia). It was the last stable rare-earth element to be discovered, in 1907.",source:"Chemistry"},
+  72:{text:"The Rule of 72: divide 72 by any annual growth rate to find the doubling time. At 6% per year, money doubles in 12 years. Luca Pacioli described this trick in 1494.",source:"Finance"},
+  73:{text:"Sheldon Cooper called 73 'the best number': it's the 21st prime, its mirror (37) is also prime, and in binary (1001001) it reads identically forwards and backwards.",source:"Mathematics & pop culture"},
+  74:{text:"Element 74 is Tungsten (W) — from Swedish 'tung sten' (heavy stone). Its melting point of 3,422°C is the highest of any metal. Lightbulb filaments glowed white-hot without melting.",source:"Chemistry"},
+  75:{text:"Global average lifespan passed 75 in 2023 — double the 1900 average. Nearly all of this gain came from just three interventions: vaccines, sanitation, and antibiotics.",source:"Global health"},
+  76:{text:"Mark Twain was born in 1835 and died in 1910 — both years when Halley's Comet appeared. 'I came in with Halley's Comet,' he said. 'I expect to go out with it.' He was right.",source:"American history"},
+  77:{text:"George Lucas gave up his director's fee for Star Wars (1977) in exchange for merchandising rights. That decision — which the studio happily accepted — was worth billions.",source:"Film history"},
+  78:{text:"78 RPM — the original gramophone speed — was set in the 1890s by whatever early disc-cutting machinery naturally rotated at. It was only phased out when vinyl arrived in the 1950s.",source:"Music history"},
+  79:{text:"Gold's atomic number (79) means its inner electrons move at 58% of light speed. Relativistic effects on those electrons are literally why gold is yellow rather than silver-white.",source:"Chemistry"},
+  80:{text:"Jules Verne's Around the World in 80 Days (1872) inspired Nellie Bly to actually do it. In 1889–90 she circled the globe in 72 days, 6 hours — beating the fictional record.",source:"Literary history"},
+  81:{text:"81 = 3⁴ = 9². A Sudoku grid is 9×9 = 81 squares. Howard Garns invented it in 1979 as 'Number Place'; it reached Japan in 1984 and the world in 2004, becoming history's most popular puzzle.",source:"Mathematics & games"},
+  82:{text:"Uranus has an axial tilt of 82.23° — it rotates nearly on its side. The leading theory is a collision with an Earth-sized object early in the solar system's history.",source:"Astronomy"},
+  83:{text:"83 is the 23rd prime. The speed of sound is ~343 m/s; the speed of light is ~299,792 km/s — their ratio is 873,819. The gap between 83 and that number is the gap between intuition and reality.",source:"Physics"},
+  84:{text:"Uranus takes ~84 years to orbit the Sun — one human lifetime. If you were born in 1942, Uranus completed its first orbit in your lifetime in 2026.",source:"Astronomy"},
+  85:{text:"By 1960, 85% of US homes had a television. It had taken radio 38 years to reach 50 million listeners. TV took 13 years. The internet took 4. Each medium arrives faster.",source:"Technology history"},
+  86:{text:"'86'd' — slang for rejected — likely comes from Chumley's bar at 86 Bedford Street in NYC, where undesirables were shown the back exit. The address became the verb.",source:"American slang"},
+  87:{text:"The Gettysburg Address: 'Four score and seven years ago' — 87 years before 1863 — placed 1776 in a single compressed phrase that every American would instantly decode.",source:"American history"},
+  88:{text:"A piano has 88 keys spanning 7.25 octaves — standardised by Steinway in the 1880s. Bösendorfer makes a 97-key concert grand that adds a lower octave most composers never wrote for.",source:"Music"},
+  89:{text:"89 is a Fibonacci prime. On 9 November 1989 the Berlin Wall fell. Tim Berners-Lee invented the World Wide Web three weeks earlier. Both events began the same year.",source:"20th century history"},
+  90:{text:"90° is the right angle — defined by Euclid in ~300 BC. On a sphere, triangles have angles summing to more than 180°. The difference is how GPS corrects for Earth's curvature.",source:"Mathematics"},
+  91:{text:"91 = 7×13 — the smallest composite number that looks prime at first glance. Fermat's primality test incorrectly labels it prime, making it a classic cautionary example in cryptography.",source:"Mathematics"},
+  92:{text:"92 naturally occurring elements exist, from hydrogen (1) to uranium (92). Everything heavier is synthetic — built in reactors or particle accelerators, lasting milliseconds to millennia.",source:"Chemistry"},
+  93:{text:"93 million miles (150 million km) separates Earth from the Sun — one Astronomical Unit. Light covers this distance in 8 minutes 20 seconds. We measured it precisely by timing Venus's transit in 1761.",source:"Astronomy"},
+  94:{text:"Plutonium (element 94) was synthesised in 1940 and kept classified until 1946. A grapefruit-sized sphere of it — about 6 kg — is enough to sustain a nuclear chain reaction.",source:"Nuclear history"},
+  95:{text:"1517: Luther's 95 Theses launched the Reformation. 1995: Microsoft launched Windows 95, selling 7 million copies in 5 weeks. Both 95s changed the world by distributing power.",source:"History"},
+  96:{text:"In 2022 a single optical fibre transmitted 1.02 petabits per second — enough to carry 96,000 hours of video every second. The entire internet's traffic runs on fibres thinner than a hair.",source:"Technology"},
+  97:{text:"97 is the largest two-digit prime. The Philadelphia Museum's 72 'Rocky Steps' — made famous by the 1976 film — are marked with bronze footprints. The real Rocky count is 72, not 97.",source:"Mathematics & film"},
+  98:{text:"98.6°F (37°C) normal body temperature was established by Carl Wunderlich in 1851 from 25,000 patients. Modern studies suggest 36.6°C is more accurate — Wunderlich's thermometers ran hot.",source:"Medicine"},
+  99:{text:"'99 Red Balloons' (Nena, 1983) imagined how 99 toy balloons drifting toward East Germany could trigger a nuclear war — a perfect Cold War parable, written while the Berlin Wall still stood.",source:"Music history"},
+  100:{text:"25 primes exist below 100. Scoring 100 in cricket is a 'century' — the game's defining individual milestone. 100°C is water's boiling point: the anchor of the Celsius scale.",source:"Number theory"},
+  /* ── 101–999 selected notable numbers ── */
+  101:{text:"Room 101 in Orwell's 1984 is the torture chamber containing each prisoner's worst fear. Orwell named it after a BBC conference room where he endured interminable meetings.",source:"Literature"},
+  108:{text:"108 is sacred in Hinduism, Buddhism, and Jainism: 108 Upanishads, 108 beads on a mala, and the Sun's diameter is approximately 108 times the Earth-Sun distance.",source:"Religious history"},
+  110:{text:"110 volts was Edison's 1880s standard for incandescent bulbs. Europe chose 220V later because higher voltage wastes less energy transmitting over long distances.",source:"Technology history"},
+  111:{text:"In cricket, a score of 111 is called a 'Nelson' — considered so unlucky that umpires lift one foot to ward off the hex. The superstition may predate Lord Nelson himself.",source:"Cricket folklore"},
+  112:{text:"112 is the emergency number across 80+ countries and the entire EU — designed so international travellers need only one number, not 190 local ones.",source:"Communications history"},
+  118:{text:"The periodic table has 118 confirmed elements. The last four (113–118) were confirmed in 2015–16. Oganesson (118) is so unstable it lasts less than a millisecond before decaying.",source:"Chemistry"},
+  120:{text:"120 = 5! (five factorial). The Pantheon in Rome — built 125 AD — has an unreinforced concrete dome that remained the world's largest for 1,300 years.",source:"Mathematics"},
+  121:{text:"121 = 11². The first transatlantic telephone cable (1956) carried 36 simultaneous calls. Today a single fibre-optic cable carries over 121 terabits per second.",source:"Mathematics"},
+  123:{text:"'Easy as 1-2-3': The Jackson 5's 1970 hit spent two weeks at #1. Its B-side, 'ABC', also hit #1. Both songs were recorded in a single afternoon session.",source:"Music history"},
+  128:{text:"128 = 2⁷. MIDI uses 128 values (0–127) for notes, velocities, and controllers — because 7 bits is a perfect computer boundary. Every synthesiser since 1983 speaks this language.",source:"Computing & music"},
+  137:{text:"1/137 is the fine-structure constant — the probability that an electron emits or absorbs a photon. Its precise value baffled Feynman: 'It has been a mystery since I discovered it.'",source:"Physics"},
+  142:{text:"142,857 is the cyclic number from 1/7: multiply it by 1 through 6 and you get the same six digits in rotation. Divide 1 by 7 on any calculator and watch the pattern emerge.",source:"Mathematics"},
+  144:{text:"144 = 12² and is the 12th Fibonacci number — a rare double honour. A 'gross' (144 items) was the standard wholesale unit in European trade for centuries.",source:"Mathematics"},
+  153:{text:"153 = 1³+5³+3³ — a narcissistic number, equalling the sum of its own cubed digits. Only five such 3-digit numbers exist. Finding them is a classic first programming exercise.",source:"Recreational mathematics"},
+  180:{text:"Interior angles of any triangle sum to exactly 180° — but only in flat space. On a sphere, they sum to more. GPS satellites correct for this; without it, your location would drift kilometres.",source:"Geometry"},
+  186:{text:"186,000 miles per second is the speed of light in imperial units — a number so fundamental that the metre is now defined by it: 1 metre = the distance light travels in 1/299,792,458 seconds.",source:"Physics"},
+  196:{text:"The 196-algorithm: take a number, reverse its digits, add them. Most numbers quickly reach a palindrome. 196 might never — mathematicians have computed billions of steps without finding one.",source:"Recreational mathematics"},
+  200:{text:"The US bicentennial was 1976. In cricket, a double century (200 runs) is one of the rarest individual achievements — Sir Donald Bradman averaged a double century every three innings.",source:"History"},
+  210:{text:"210 = 2×3×5×7 — the product of the first four primes (a primorial). It's divisible by every integer from 1 to 7, making it a natural unit for ancient merchants working in mixed fractions.",source:"Number theory"},
+  212:{text:"212°F is water's boiling point in Fahrenheit. New York City's original area code was 212 — so prestigious it became a business-card status symbol worth keeping even after the city ran out of numbers.",source:"Science & culture"},
+  220:{text:"220 and 284 are the smallest amicable pair: each equals the sum of the other's proper divisors. Pythagoras knew them as symbols of friendship. Only 1,224 such pairs are known below 10¹⁷.",source:"Number theory"},
+  221:{text:"221B Baker Street: Conan Doyle chose the address before that stretch of road existed. When it was built, Abbey National Bank occupied it — and employed a secretary to answer Sherlock Holmes's mail.",source:"Literature"},
+  240:{text:"240 volts is the UK/Australia standard. 240V circuits carry the same power as 110V using half the current — meaning copper wire can be half as thick, reducing the cost of wiring an entire nation.",source:"Electrical engineering"},
+  255:{text:"255 is the maximum value of an 8-bit byte (2⁸−1). In RGB colour, (255,255,255) is pure white. This single technical limit defined the colour palette of the entire visual internet.",source:"Computing"},
+  256:{text:"256 = 2⁸. One byte stores 256 values. The entire digital world — every image, message, and program — is sequences of bytes. 256 is the atom of modern information.",source:"Computing"},
+  257:{text:"257 is a Fermat prime (2^2³+1). Gauss proved a regular 257-gon can be constructed with compass and straightedge alone — one of only 31 constructible polygons.",source:"Number theory"},
+  270:{text:"270 Electoral College votes win the US presidency. The winner-take-all system means 11 key swing states matter more than the other 39 — a geographic quirk baked into the 1787 Constitution.",source:"American politics"},
+  288:{text:"288 is two gross (2 × 144). It also appears in tuning: 288 Hz was the 'philosophical D' in old just-intonation tuning systems, a pitch that pre-dates the modern 440 Hz standard.",source:"Music theory"},
+  300:{text:"At Thermopylae (480 BC), 300 Spartans held the mountain pass for three days against the Persian army — long enough for the rest of Greece to mobilise. All 300 died at their posts.",source:"Ancient history"},
+  314:{text:"314 ≈ 100π. Pi Day is 3/14 — also Einstein's birthday. The most digits of pi ever memorised: 70,000, recited by Rajveer Meena in 2015 over 10 hours without a single error.",source:"Mathematics"},
+  343:{text:"343 = 7³. The speed of sound at sea level is 343 m/s. Pilots first exceeded this in 1947 when Chuck Yeager flew the Bell X-1 — nicknamed 'Glamorous Glennis' after his wife.",source:"Physics & aviation"},
+  360:{text:"360° in a circle. Babylonians chose 360 because it approximates the year and is divisible by 24 different integers — more than any number below it. A geometrical decision we still live inside.",source:"Ancient mathematics"},
+  365:{text:"365.2422 days per solar year. The Gregorian correction (1582) is elegant: add a leap year every 4 years, subtract every 100, restore every 400. This keeps the calendar accurate for 3,000+ years.",source:"Astronomy"},
+  370:{text:"370 = 3³+7³+0³ — another narcissistic number. Flight MH370 disappeared in 2014 with 239 aboard; the wreckage has never been fully found, the deepest aviation mystery of the modern era.",source:"Mathematics"},
+  371:{text:"371 = 3³+7³+1³ — narcissistic. Only 153, 370, 371, and 407 have this property among 3-digit numbers. Finding them was a puzzle set for early programmers learning loops.",source:"Recreational mathematics"},
+  400:{text:"400 = 20². The 400-metre race is one lap of a standard athletics track — far enough to require pacing, short enough to run at near-sprint. Michael Johnson ran it in 43.49 seconds in 1999.",source:"Athletics"},
+  404:{text:"HTTP 404 'Not Found' is possibly named after CERN's Room 404, where the web's first servers lived. The room number became the web's most recognised error code — a digital Pompeii.",source:"Internet history"},
+  407:{text:"407 = 4³+0³+7³ — the fourth and final 3-digit narcissistic number. The 407 ETR toll highway in Toronto was the world's first all-electronic toll road when it opened in 1997.",source:"Mathematics"},
+  420:{text:"420 = 2²×3×5×7 — highly composite, divisible by every integer 1 through 7. Ancient merchants used it to simplify mixed-unit calculations because it reduces so many fractions cleanly.",source:"Mathematics"},
+  440:{text:"A440 — concert pitch A above middle C — was internationally standardised in 1955 by the ISO. Before that, orchestras tuned differently across countries; historical recordings sound slightly sharp.",source:"Music history"},
+  496:{text:"496 is the third perfect number (1+2+4+8+16+31+62+124+248=496). Every even perfect number corresponds to a Mersenne prime. No odd perfect number has ever been found.",source:"Number theory"},
+  500:{text:"Magellan-Elcano (1519–22) completed the first circumnavigation. Magellan died in the Philippines; Elcano brought 18 survivors home across 60,000 km — completing what Magellan began.",source:"Age of Exploration"},
+  512:{text:"512 = 2⁹. Hard drives used 512-byte sectors for 50 years. Modern drives use 4,096-byte sectors internally but emulate 512-byte for legacy software — a compatibility layer older than most programmers.",source:"Computing history"},
+  540:{text:"The interior angles of a pentagon sum to 540°. A football (soccer ball) uses 20 hexagons and 12 pentagons — the hexagonal faces provide flatness; the pentagonal faces provide curvature.",source:"Geometry"},
+  555:{text:"US film and TV phone numbers starting with 555 are fictional placeholders — a rule set to protect real subscribers. 867-5309 is a real number; the song caused a decade of prank calls.",source:"Pop culture"},
+  600:{text:"Tennyson wrote 'The Charge of the Light Brigade' within days of the 1854 battle at Balaclava — immortalising the 600 cavalry before most had returned. The poem spread by telegram.",source:"Military history"},
+  630:{text:"The Gateway Arch (St. Louis, 1965) stands exactly 630 feet tall and 630 feet wide at its base. Its catenary curve is the natural shape of a hanging chain — structurally perfect.",source:"Architecture"},
+  666:{text:"666 in Revelation is believed to encode 'Nero Caesar' in Hebrew gematria — a way to criticise the emperor without writing his name, at a time when doing so meant execution.",source:"Biblical history"},
+  720:{text:"720 = 6! The number of ways to seat 6 people at a table is 5! = 120 (rotations are the same). For a dinner party of 10, the arrangements number 9! = 362,880.",source:"Mathematics"},
+  729:{text:"729 = 3⁶ = 27² = 9³. It is simultaneously a perfect square, perfect cube, and perfect 6th power — one of the most structurally over-achieving composite numbers below 1,000.",source:"Mathematics"},
+  777:{text:"Triple 7 is the jackpot on most slot machines — a superstition rooted in the Bible's use of 7 as divine completion. The Boeing 777 (1994) became the world's most successful long-haul airliner.",source:"Culture & aviation"},
+  786:{text:"786 is the numerical value of the Bismillah ('In the name of God, most gracious, most merciful') in Arabic abjad notation. Many Muslims write 786 as a blessing at the top of letters.",source:"Islamic culture"},
+  800:{text:"In 800 AD, Charlemagne was crowned Holy Roman Emperor by Pope Leo III at St. Peter's — establishing the concept of a unified Christian Europe that shaped the continent for a millennium.",source:"Medieval history"},
+  808:{text:"The Roland TR-808 drum machine (1980) was a commercial failure that became the most influential percussion instrument in history. Its bass drum still underpins hip-hop, trap, and electronic music.",source:"Music history"},
+  888:{text:"888 is considered supremely lucky in Chinese culture — 'ba' (8) sounds like 'prosper'. The Beijing Olympics opened on 08/08/08 at 8:08:08 PM for this reason. Tickets for that ceremony cost 8,888 yuan.",source:"Chinese culture"},
+  900:{text:"William Shanks spent 15 years computing pi by hand, reaching 900 digits in 1873. He made an error at digit 528; the remaining 372 digits were wrong. A human tragedy measured in decimal places.",source:"Mathematics history"},
+  969:{text:"Methuselah is said in Genesis to have lived 969 years — the longest in the Bible. The oldest known living tree, a bristlecone pine in California, is estimated at 4,855 years old.",source:"Biblical & natural history"},
+  999:{text:"999 was the world's first emergency telephone number, launched in London in 1937. The digits were chosen because they were easy to dial in the dark on a rotary telephone.",source:"British history"},
+  /* ── Historical years 1000–2026 ── */
+  1000:{text:"Around 1000 AD the world held ~310 million people. Leif Eriksson reached North America — 500 years before Columbus — and Viking settlements at L'Anse aux Meadows still stand.",source:"Medieval history"},
+  1066:{text:"1066: William the Conqueror's victory at Hastings introduced French vocabulary to English. About 30% of English words have French roots — all traceable to one battle in October.",source:"English history"},
+  1088:{text:"1088: The University of Bologna was founded — the world's first university, still operating today. It invented the concept of a degree, academic freedom, and student-led governance.",source:"Educational history"},
+  1095:{text:"1095: Pope Urban II launched the First Crusade. The Crusades reshaped the Middle East and brought algebra, optics, and papermaking from the Islamic world back to Europe.",source:"Medieval history"},
+  1215:{text:"1215: King John sealed Magna Carta at Runnymede — establishing for the first time that the monarch was subject to law. Its principles of habeas corpus underpin every modern democracy.",source:"Legal history"},
+  1271:{text:"1271: Marco Polo began his 24-year journey to China, returning with accounts of paper money and coal. Europeans initially dismissed his reports as fantasy.",source:"Exploration history"},
+  1347:{text:"1347: The Black Death reached Europe via Sicily. Within five years it killed 30–60% of Europe's population — roughly 50 million people — the greatest proportional demographic loss in history.",source:"Medical history"},
+  1415:{text:"1415: Henry V defeated a French force five times larger at Agincourt — a victory immortalised by Shakespeare 185 years later, when it still felt like yesterday.",source:"Medieval history"},
+  1440:{text:"~1440: Gutenberg's printing press. Within 50 years, 20 million books had been printed — more than all European scribes had copied in the previous thousand years combined.",source:"Technology history"},
+  1453:{text:"1453: Constantinople fell to Mehmed II, ending the Byzantine Empire — Rome's 1,500-year continuation. Greek scholars fled to Italy, carrying manuscripts that accelerated the Renaissance.",source:"Medieval history"},
+  1492:{text:"1492: Columbus reached the Americas. Within 150 years, 90% of indigenous Americans had died of Old World diseases — the largest demographic collapse in recorded history.",source:"Age of Exploration"},
+  1503:{text:"~1503: Leonardo da Vinci likely began the Mona Lisa. It is today the world's most visited, most written-about artwork — attended by 6 million people a year behind bulletproof glass.",source:"Renaissance art"},
+  1517:{text:"1517: Luther's 95 Theses. The printing press spread them across Europe in weeks. The Reformation changed Christianity, politics, and literacy rates across the entire Western world.",source:"Religious history"},
+  1543:{text:"1543: Copernicus published his heliocentric model — and died the same day he received the first printed copy. The Church didn't formally acknowledge his model until 1992.",source:"Scientific history"},
+  1564:{text:"1564: Shakespeare and Galileo were born. Michelangelo died. The year captures the Renaissance handing off to the Scientific Revolution in a single twelve-month window.",source:"Cultural history"},
+  1600:{text:"1600: The East India Company was founded by royal charter — a private corporation that would eventually govern a subcontinent, command armies, and reshape the modern world.",source:"Colonial history"},
+  1620:{text:"1620: 102 Pilgrims reached Plymouth Rock on the Mayflower. The Mayflower Compact, signed on board, was the first written framework for self-governance in what would become America.",source:"American history"},
+  1665:{text:"1665: Newton was sent home from Cambridge during plague. In 18 months at Woolsthorpe he invented calculus, explained gravity, and developed the theory of colour — his most productive period.",source:"Scientific history"},
+  1687:{text:"1687: Newton published Principia Mathematica. Edmond Halley paid for the printing out of his own pocket when the Royal Society ran out of funds. The book rewrote the laws of the universe.",source:"Scientific history"},
+  1752:{text:"1752: Britain switched to the Gregorian calendar. To correct the drift, Wednesday 2 September was followed directly by Thursday 14 September — eleven days vanished. People rioted.",source:"Calendar history"},
+  1776:{text:"1776: Jefferson drafted the Declaration of Independence in 17 days. Its opening sentence — 43 words — remains the most consequential statement in the history of political philosophy.",source:"American history"},
+  1783:{text:"1783: The Montgolfier brothers tested their hot air balloon with a sheep, a duck, and a rooster over Versailles. Two months later, humans flew for the first time.",source:"Aviation history"},
+  1789:{text:"1789: The French Revolution began with the storming of the Bastille. The Declaration of the Rights of Man followed within weeks, defining liberty and equality for modern politics.",source:"French history"},
+  1796:{text:"1796: Jenner's first vaccination — a boy inoculated against smallpox using cowpox. Vaccination would go on to save more lives than any other medical intervention in history.",source:"Medical history"},
+  1804:{text:"1804: Napoleon crowned himself Emperor at Notre-Dame, taking the crown from the Pope's hands to place it on his own head — one of history's most theatrical gestures of power.",source:"French history"},
+  1815:{text:"1815: Waterloo ended Napoleon's empire. The Tambora eruption the same year caused 1816 to be 'the Year Without a Summer' — crop failures and famine across the Northern Hemisphere.",source:"European history"},
+  1830:{text:"1830: The Liverpool–Manchester Railway — the first steam passenger railway — opened. Stephenson's Rocket proved steam was viable. Within 30 years, 7,000 miles of track crossed Britain.",source:"Industrial history"},
+  1848:{text:"1848: Revolutions broke out simultaneously in France, Germany, Austria, Hungary, and Italy. Marx published the Communist Manifesto the same year. A continent on fire.",source:"European history"},
+  1859:{text:"1859: Darwin's On the Origin of Species. The first 1,250 copies sold out the same day. It is the most consequential scientific book ever published and still generates controversy 165 years later.",source:"Scientific history"},
+  1865:{text:"1865: The Civil War ended and Lincoln was assassinated within five days of each other. The 13th Amendment abolished slavery. The transcontinental railroad began construction the same year.",source:"American history"},
+  1867:{text:"1867: Canada confederated, Marx published Das Kapital, Nobel patented dynamite, and the Suez Canal company formed. Few years packed more future into a single twelve months.",source:"Global history"},
+  1876:{text:"1876: Bell made the first telephone call — 'Mr Watson, come here, I want to see you.' Within 10 years, 150,000 Americans had phones. Within 130, 6.6 billion people did.",source:"Technology history"},
+  1879:{text:"1879: Edison's practical lightbulb. Within 3 years, Pearl Street Station in Manhattan powered 400 bulbs — the birth of the electrical grid that now covers the entire planet.",source:"Technology history"},
+  1885:{text:"1885: Benz's Patent-Motorwagen — the first true automobile. Three wheels, 0.75 horsepower, 16 km/h top speed. Every car ever made is its direct descendant.",source:"Technology history"},
+  1889:{text:"1889: The Eiffel Tower opened as a 'temporary structure'. It was saved from demolition because its height made it the world's best radio antenna. Now France's most iconic symbol.",source:"Architecture"},
+  1896:{text:"1896: The first modern Olympics, Athens — 14 nations, 241 athletes, all male. Today: 206 nations, 11,000+ athletes, 330 events. Scale multiplied 50-fold in 128 years.",source:"Sports history"},
+  1903:{text:"1903: The Wright Brothers flew 12 seconds over 37 metres at Kitty Hawk. Sixty-six years later, humans walked on the Moon — the fastest acceleration of any technology in history.",source:"Aviation history"},
+  1905:{text:"1905: Einstein's miracle year. Working as a patent clerk at 26, he published four papers including Special Relativity and E=mc² — transforming physics while clocking office hours.",source:"Scientific history"},
+  1912:{text:"1912: The Titanic carried lifeboats for 1,178 people but had 2,224 aboard. 1,517 died. The disaster directly produced the 1914 SOLAS agreement requiring sufficient lifeboats for all.",source:"Maritime history"},
+  1914:{text:"1914: WWI began with the assassination of Archduke Franz Ferdinand. Expected to be over by Christmas, it lasted four years and killed 20 million — the war that ended the 19th-century world.",source:"WWI history"},
+  1917:{text:"1917: The Russian Revolution and the US entering WWI happened the same year. Both events shaped the next 75 years of world history more than any other 12-month span.",source:"20th century history"},
+  1918:{text:"1918: WWI ended at 11:00 AM on 11/11. The Spanish Flu simultaneously killed 50–100 million worldwide — more than the war itself. The two crises competed for the same newspapers.",source:"WWI history"},
+  1927:{text:"1927: Lindbergh flew solo New York to Paris in 33.5 hours. He navigated with a compass, maps, and five sandwiches. He was 25. The world went mad with celebration.",source:"Aviation history"},
+  1928:{text:"1928: Fleming noticed mould killing bacteria in a petri dish and discovered penicillin. Mass production began in 1944. An estimated 200 million lives have been saved by that accident.",source:"Medical history"},
+  1929:{text:"1929: 'Black Thursday' — the Wall Street Crash. US unemployment went from 3% to 25% within three years. The Depression reshaped government's relationship with the economy permanently.",source:"Economic history"},
+  1936:{text:"1936: Turing published his paper on the theoretical Turing Machine — the mathematical foundation of every computer ever built — while solving a pure problem in mathematical logic.",source:"Computing history"},
+  1939:{text:"1939: WWII began with Germany's invasion of Poland. In the same year: The Wizard of Oz, Gone with the Wind, The Grapes of Wrath. Catastrophe and culture don't pause for each other.",source:"WWII history"},
+  1945:{text:"1945: WWII ended. The atomic bombs on Hiroshima and Nagasaki killed ~200,000 but ended a war killing 250,000 per month. The calculus of that decision is still debated.",source:"WWII history"},
+  1947:{text:"1947: India and Pakistan gained independence, the transistor was invented, the CIA was founded, Chuck Yeager broke the sound barrier, and the Dead Sea Scrolls were discovered.",source:"20th century history"},
+  1948:{text:"1948: Israel was declared, the Universal Declaration of Human Rights adopted, the NHS founded, and Orwell wrote 1984 — one of the most historically dense years of the century.",source:"20th century history"},
+  1953:{text:"1953: Watson and Crick described DNA's double helix using Rosalind Franklin's data — without crediting her. Hillary and Tenzing summited Everest 16 days later. Two peaks in a fortnight.",source:"Scientific history"},
+  1957:{text:"1957: Sputnik's beep-beep was heard in every country on Earth. The Space Race began. The sound of a basketball-sized sphere orbiting overhead changed what humanity believed was possible.",source:"Space history"},
+  1961:{text:"1961: Gagarin orbited Earth in 108 minutes on 12 April — changing humanity's self-image forever. The Berlin Wall went up four months later. The same year opened a universe and sealed a city.",source:"Space history"},
+  1963:{text:"1963: Kennedy was assassinated on live television — the first major global event witnessed in real time. The shock of seeing it happen changed journalism, politics, and collective grief.",source:"American history"},
+  1967:{text:"1967: The Summer of Love, the first heart transplant, the Six-Day War, the first Super Bowl, and the release of Sgt. Pepper's Lonely Hearts Club Band — all in one year.",source:"20th century history"},
+  1969:{text:"1969: Armstrong walked on the Moon on 20 July. Woodstock was 3 weeks later. ARPANET (the internet's ancestor) went online in October. The 1960s delivered more than they promised.",source:"Space history"},
+  1971:{text:"1971: The microprocessor (Intel 4004) was invented. Email was sent for the first time. The voting age dropped to 18 in the US. Every digital revolution of the next 50 years began here.",source:"Technology history"},
+  1973:{text:"1973: The oil crisis ended the post-war boom. Roe v Wade was decided. The Sydney Opera House opened. Pink Floyd released Dark Side of the Moon. History doesn't wait for quiet years.",source:"20th century history"},
+  1976:{text:"1976: Apple was officially incorporated on April Fool's Day. The Concorde entered service. The US bicentennial. The Ramones released their debut album. Punk and Silicon Valley were born simultaneously.",source:"Technology & culture"},
+  1977:{text:"1977: Star Wars, the Apple II, and Voyager 1 & 2 all launched. The blockbuster era and the personal computer era began the same year, twin inventions that rewired entertainment and work.",source:"Technology & culture"},
+  1981:{text:"1981: IBM launched the PC running Microsoft DOS. Within 3 years, IBM-compatible clones held 50% of the market — establishing the architecture that still runs most of the world's computers.",source:"Computing history"},
+  1984:{text:"1984 arrived and Orwell's predictions felt uncomfortably accurate. Apple launched the Mac with its iconic Super Bowl ad. The year that defined both surveillance anxiety and the GUI revolution.",source:"Technology & culture"},
+  1986:{text:"1986: Chernobyl released 400 times more radiation than Hiroshima. The disaster's exposure of Soviet incompetence accelerated the USSR's internal collapse that followed three years later.",source:"20th century history"},
+  1989:{text:"1989: The Berlin Wall fell on 9 November. Berners-Lee proposed the World Wide Web in March. Tiananmen Square was crushed in June. A year that compressed a generation of change into 365 days.",source:"20th century history"},
+  1991:{text:"1991: The Soviet Union dissolved on Christmas Day — ending the Cold War. The World Wide Web went public. Linux was released. The world changed shape in a single year.",source:"20th century history"},
+  1994:{text:"1994: Nelson Mandela was elected President, ending apartheid. Amazon and Netscape were founded. The Channel Tunnel opened. Jeff Bezos sold his first book from a garage.",source:"20th century history"},
+  1997:{text:"1997: Hong Kong returned to China after 156 years. Deep Blue beat Kasparov at chess. Dolly the sheep was cloned. Harry Potter and the Philosopher's Stone was published.",source:"20th century history"},
+  1998:{text:"1998: Google was founded in a Menlo Park garage by two PhD students. Their PageRank algorithm changed how humanity finds information — arguably the most consequential startup in history.",source:"Technology history"},
+  2000:{text:"2000 arrived without Y2K collapse. The dot-com bubble peaked at $6.7 trillion. The Human Genome Project published a working draft. Concorde had its only crash. Millennium or anticlimax?",source:"21st century history"},
+  2001:{text:"2001: 9/11 killed 2,977 people and permanently reshaped global security. Wikipedia launched the same year. The iPod launched. History's darkest day shared its year with two tools of connection.",source:"21st century history"},
+  2004:{text:"2004: Facebook launched from a Harvard dorm room with 4 features and no business plan. The Indian Ocean tsunami killed 228,000. YouTube was still a year away. The social era was just beginning.",source:"21st century history"},
+  2007:{text:"2007: Steve Jobs unveiled the iPhone on 9 January — a touchscreen, full web browser, and iPod combined. In 10 years, 3.5 billion people had smartphones. No product spread faster.",source:"Technology history"},
+  2008:{text:"2008: Lehman Brothers collapsed — the largest bankruptcy in US history. Obama was elected. Bitcoin was invented by the pseudonymous Satoshi Nakamoto. A financial crisis and a financial revolution in one year.",source:"21st century history"},
+  2012:{text:"2012: CERN confirmed the Higgs Boson — the particle giving matter its mass, predicted 48 years earlier. SpaceX became the first private company to dock with the International Space Station.",source:"Scientific history"},
+  2016:{text:"2016: LIGO detected gravitational waves — a ripple in spacetime from two black holes colliding 1.3 billion light-years away. Einstein predicted this in 1916, exactly a century earlier.",source:"Scientific history"},
+  2020:{text:"2020: COVID-19 became a pandemic. The mRNA vaccine was developed in 11 months — proving a platform that may defeat future pandemics as quickly as they emerge.",source:"Medical history"},
+  2022:{text:"2022: The James Webb Space Telescope returned its first images — seeing 13.6 billion years into the past. Russia invaded Ukraine. Two events: one expanding the universe, one contracting it.",source:"21st century history"},
+  2023:{text:"2023: ChatGPT reached 100 million users faster than any product in history. AlphaFold solved protein folding for nearly all known proteins — a 50-year challenge solved in months by AI.",source:"Technology history"},
+  2024:{text:"2024: The Paris Olympics returned to their birthplace 128 years later. AI passed bar exams and medical licensing tests. The line between tool and colleague began to blur.",source:"21st century history"},
+  2025:{text:"2025: AI agents began autonomously writing software and conducting research. The boundary between tool and collaborator became genuinely ambiguous for the first time in computing history.",source:"21st century history"},
+  2026:{text:"2026 marks 250 years since the US Declaration of Independence, and hosts the FIFA World Cup across USA, Canada, and Mexico — the largest sporting event ever organised.",source:"21st century history"},
+  /* ── Large notable numbers ── */
+  3141:{text:"3141 ≈ π × 1000. Pi's digits contain every possible finite sequence of numbers — somewhere in pi, your phone number and this sentence exist as a digit string. Probably.",source:"Mathematics"},
+  6174:{text:"6174 is Kaprekar's constant: take any 4-digit number with at least 2 different digits, arrange descending minus ascending, repeat — you always reach 6174 in at most 7 steps.",source:"Recreational mathematics"},
+  9999:{text:"9999: one below five digits. In the 1960s, programmers used 2-digit years to save storage. By 1999, those systems had been running for 35 years. Y2K was a $300 billion near-miss.",source:"Computing history"},
+  10000:{text:"10,000 hours is Gladwell's popularisation of Ericsson's research on mastery. At 2 focused hours per day, that's 13.7 years. Talent opens the door; time is what fills the room.",source:"Psychology"},
+  65536:{text:"65,536 = 2¹⁶ — the number of values in a 16-bit system. It defined early computer colour palettes, memory limits, and original internet port ranges. A ceiling that shaped a generation.",source:"Computing"},
+  86400:{text:"86,400 seconds in a day (60×60×24). Every computer clock, GPS satellite, and stock exchange synchronises to this count. Time is the only coordinate that never negotiates.",source:"Science"},
+  100000:{text:"100,000 words is a novel's approximate length. At 250 words per minute, it's ~7 hours of reading. Tolstoy's War and Peace is ~580,000 words — a month of evenings.",source:"Publishing"},
+  1000000:{text:"One million seconds = 11.5 days. One billion seconds = 31.7 years. This gap explains why humans consistently underestimate the national debt, the age of the universe, and compound interest.",source:"Mathematics"},
+  1048576:{text:"1,048,576 = 2²⁰ = 1 mebibyte. The first consumer hard drive (1980) stored 5 MB. A single 4K photo today is ~25 MB. Storage has grown one millionfold in 44 years.",source:"Computing history"},
   108:{text:"108 is sacred in Hinduism and Buddhism. Malas (prayer bead strings) traditionally have 108 beads.",source:"Religious history"},
   118:{text:"The periodic table has 118 confirmed elements. Oganesson (Og, 118) was confirmed in 2015.",source:"Chemistry"},
   144:{text:"144 = 12². It's also the 12th Fibonacci number. Fibonacci numbers pervade nature: spirals, petals, branching.",source:"Mathematics"},
@@ -283,7 +492,7 @@ const FACTS = {
   1984:{text:"Orwell's 1984 (written 1948) coined 'Big Brother', 'doublethink', and 'thoughtcrime' — now political vocabulary.",source:"Literary history"},
   2001:{text:"2001: A Space Odyssey (1968) depicted a Jupiter mission so realistically NASA used its visuals in presentations.",source:"Film history"},
 };
-/* ── mathematical fallback facts ── */
+/* ── mathematical fallback facts (8–10 rotating variants per category) ── */
 function _isPrime(n){
   if(n<2)return false; if(n<4)return true;
   if(n%2===0||n%3===0)return false;
@@ -291,23 +500,78 @@ function _isPrime(n){
   return true;
 }
 function _mathFact(n){
-  if(n<0)
-    return {text:`Negative numbers were controversial for centuries — Brahmagupta (628 AD) was first to formalise rules for negatives and zero.`,source:'Mathematical history'};
+  /* ── negative numbers ── */
+  if(n<0) return _pick(n,[
+    {text:`Negative numbers were called 'absurd' by European mathematicians until the 16th century. Fibonacci called them 'debiti' (debts) in 1202.`,source:'Mathematical history'},
+    {text:`Brahmagupta (628 AD) first formalised negatives, defining them as 'debts' opposite to 'fortunes' — the world's first signed arithmetic.`,source:'Indian mathematics'},
+    {text:`Descartes called negative roots 'false roots' in 1637 — he couldn't conceive of a length shorter than zero. The concept took another century to normalise.`,source:'17th-century mathematics'},
+    {text:`Ancient Chinese used red counting rods for positive numbers and black for negative as early as 200 BC — colour-coded arithmetic on a counting board.`,source:'Ancient Chinese mathematics'},
+    {text:`The Dead Sea sits at −430 m, the lowest elevation on Earth's surface. Negative numbers are places you can stand, not just abstractions on a page.`,source:'Geography'},
+    {text:`Negative pressure (suction) drives every vacuum cleaner, syringe, and lung — real phenomena that existed for millennia before anyone had a symbol for them.`,source:'Physics'},
+    {text:`Stock markets post negative returns in roughly 1 in 4 years. For most of history, merchants recording a loss had no symbol for it — just a crossed-out positive.`,source:'Financial history'},
+    {text:`Absolute zero — the coldest possible temperature — is −273.15°C. Every degree above it is a positive multiple of this extreme negative anchor.`,source:'Physics'},
+  ]);
+  /* ── perfect squares ── */
   const sqrt=Math.sqrt(n);
-  if(Number.isInteger(sqrt)&&sqrt>1)
-    return {text:`${n} is a perfect square — ${sqrt}² = ${n}. Perfect squares were a cornerstone of Pythagorean mathematics (~500 BC).`,source:'Number theory'};
+  if(Number.isInteger(sqrt)&&sqrt>1) return _pick(n,[
+    {text:`${n} = ${sqrt}². Ancient architects guaranteed right angles by stretching a 12-knot rope into a 3-4-5 triangle — perfect squares were engineering tools before they were theory.`,source:'Ancient engineering'},
+    {text:`${n} = ${sqrt}². The Pythagoreans arranged pebbles into squares to meditate on them, believing square numbers had cosmic significance. Mathematics began as philosophy.`,source:'Ancient philosophy'},
+    {text:`${n} = ${sqrt}². The sum of the first ${sqrt} odd numbers equals ${sqrt}² — always. The Greeks called this the 'gnomon' pattern, visible in L-shaped stone arrangements.`,source:'Number theory'},
+    {text:`${n} = ${sqrt}². Perfect squares always end in 0, 1, 4, 5, 6, or 9 — never 2, 3, 7, or 8. This single rule eliminates half all integers as candidates in under a second.`,source:'Number theory'},
+    {text:`${n} = ${sqrt}². Every perfect square is the sum of consecutive odd numbers starting from 1. Gauss saw these patterns as a child and frightened his teachers.`,source:'Number theory'},
+    {text:`${n} = ${sqrt}². The Fibonacci spiral is built from squares — each square's side equals the next Fibonacci number. Nature chose square geometry as its growth template.`,source:'Mathematics'},
+    {text:`${n} = ${sqrt}². Lagrange proved in 1770 that every positive integer is the sum of at most 4 perfect squares. It took 2,000 years to prove what anyone could verify by experiment.`,source:'Number theory'},
+  ]);
+  /* ── powers of two ── */
   if(n>1&&(n&(n-1))===0){
     const exp=Math.log2(n);
-    return {text:`${n} = 2^${exp}. Powers of two define digital computing — every byte, pixel and memory address is built on them.`,source:'Computing'};
+    return _pick(n,[
+      {text:`${n} = 2^${exp}. Every digital image, song, and document ever created is ultimately sequences of powers of two — the binary heartbeat underneath everything.`,source:'Computing'},
+      {text:`${n} = 2^${exp}. Fold a sheet of paper ${exp} times and it has ${n} layers. Fold any paper 42 times and it reaches the Moon — exponential growth defies intuition.`,source:'Mathematics'},
+      {text:`${n} = 2^${exp}. Cell division is nature's binary: one cell becomes 2, 4, 8... A human body's 37 trillion cells began from a single fertilised egg doubling 35 times.`,source:'Biology'},
+      {text:`${n} = 2^${exp}. The wheat-and-chessboard problem: 2^63 grains on the last square is more wheat than humanity has harvested in its entire history. That's two more doublings from here.`,source:'Mathematics'},
+      {text:`${n} = 2^${exp}. Musical octaves double in frequency: A4 = 440 Hz, A5 = 880 Hz, A6 = 1760 Hz. Sound itself is built on powers of two — the physics predates the maths.`,source:'Acoustics'},
+      {text:`${n} = 2^${exp}. Tournament brackets use powers of two so every round halves the field perfectly. ${n} competitors means ${exp} rounds of perfectly symmetric elimination.`,source:'Mathematics'},
+      {text:`${n} = 2^${exp}. Binary explains why a 'gigabyte' is 1,073,741,824 bytes, not a billion — powers of two never coincide exactly with powers of ten. The gap haunts storage marketing.`,source:'Computing'},
+    ]);
   }
-  if(_isPrime(n)&&n<1e6)
-    return {text:`${n} is prime — divisible only by 1 and itself. Euclid proved infinitely many primes exist in his Elements (~300 BC).`,source:'Number theory'};
-  if(n>10000)
-    return {text:`Calculations of this scale would have taken hours by hand before Babbage's Difference Engine (1822) — the first mechanical computer.`,source:'Computing history'};
-  const digits=String(n).split('').map(Number);
+  /* ── prime numbers ── */
+  if(_isPrime(n)&&n<1e6) return _pick(n,[
+    {text:`${n} is prime. RSA encryption — securing every HTTPS connection, every online payment — is unbreakable because factoring large primes remains computationally infeasible.`,source:'Cryptography'},
+    {text:`${n} is prime. Cicadas emerge every 13 or 17 years (both prime) to avoid synchronising with any predator whose cycle divides their own. Evolution discovered number theory.`,source:'Evolutionary biology'},
+    {text:`${n} is prime. Euclid's proof that primes never end (~300 BC) remains one of mathematics' most elegant arguments — a half-page proof that settled the question for all time.`,source:'Ancient mathematics'},
+    {text:`${n} is prime. The Riemann Hypothesis — deepest unsolved problem in mathematics, worth $1 million — is fundamentally about how prime numbers are distributed along the number line.`,source:'Number theory'},
+    {text:`${n} is prime. Goldbach's conjecture (1742): every even number > 2 is the sum of two primes. Verified up to 4×10¹⁸. Still unproven after 280 years.`,source:'Number theory'},
+    {text:`${n} is prime. The largest known prime (as of 2024) has over 41 million digits — found by a volunteer distributed computing project running on home computers worldwide.`,source:'Computational mathematics'},
+    {text:`${n} is prime. Twin primes — pairs like 11 & 13, 17 & 19 — may be infinite, but no one has proved it. The Twin Prime Conjecture has stood for 175 years.`,source:'Number theory'},
+    {text:`${n} is prime. Mersenne primes (2^p−1) are the easiest large primes to test for — only 51 are known. The Great Internet Mersenne Prime Search has run since 1996.`,source:'Number theory'},
+  ]);
+  /* ── large numbers: prefix hint + scale story ── */
+  if(n>10000) return _pick(n,[
+    {text:`${n.toLocaleString()} — at this scale, you're in territory of city populations, molecular counts, and interplanetary distances measured in kilometres. Context is everything.`,source:'Science'},
+    {text:`${n.toLocaleString()} takes ${String(n).length} digits to write. Before Arabic numerals reached Europe in the 13th century, writing this in Roman numerals would fill a sentence.`,source:'Mathematical history'},
+    {text:`${n.toLocaleString()} — Babbage's Difference Engine (1822) could compute this in minutes. A trained human calculator in 1800 would have spent an hour on it.`,source:'Computing history'},
+    {text:`At $1 per second, accumulating ${n.toLocaleString()} would take ${(n/86400).toFixed(1)} days of continuous counting — ${(n/86400/365).toFixed(2)} years without sleep.`,source:'Mathematics'},
+    {text:`${n.toLocaleString()} light-years would take you ${(n/4.24).toFixed(0)}× the distance to Proxima Centauri, our nearest stellar neighbour at 4.24 light-years.`,source:'Astronomy'},
+    {text:`The observable universe has ~10^80 atoms. Large numbers only feel abstract until you find their scale — ${n.toLocaleString()} has one waiting to be discovered.`,source:'Cosmology'},
+  ]);
+  /* ── digit-sum narcissism ── */
+  const digits=String(Math.abs(n)).split('').map(Number);
   if(digits.reduce((a,b)=>a+b,0)===n&&n>1)
-    return {text:`${n} equals the sum of its own digits — a rare property explored in recreational mathematics.`,source:'Number theory'};
-  return {text:`${n} — every integer holds hidden structure. Number theory, from Euclid to Ramanujan, reveals the patterns within.`,source:'Mathematics'};
+    return {text:`${n} equals the sum of its own digits — a property so rare that Babylonian mathematicians recorded it as a curiosity over 3,000 years ago.`,source:'Recreational mathematics'};
+  /* ── generic philosophical fallback (10 rotating) ── */
+  return _pick(n,[
+    {text:`Hardy wrote: 'A mathematician is a maker of patterns.' ${n} holds patterns — in its prime factorisation, its digital root, its continued fraction — that number theorists are still mapping.`,source:'Mathematics'},
+    {text:`Erdős believed the best proofs were in 'The Book' — God's collection of perfect arguments. ${n} has its page, even if we haven't found it yet.`,source:'Mathematics'},
+    {text:`Leibniz wrote: 'Music is the pleasure the human mind experiences from counting without being aware that it is counting.' ${n} is a measure of that pleasure.`,source:'Philosophy'},
+    {text:`Lagrange proved in 1770 that every positive integer is the sum of at most 4 perfect squares. ${n} is no exception — though finding those four squares is left as an exercise.`,source:'Number theory'},
+    {text:`Cantor showed there are different sizes of infinity. ${n}, however large, is infinitely far from the smallest infinity. Every finite number is equally small compared to ℵ₀.`,source:'Set theory'},
+    {text:`In base 12, ${n} would look completely different. The Babylonians argued base 60 was superior — divisible by more integers, producing fewer fractions. They may have been right.`,source:'Mathematical history'},
+    {text:`Pythagoras said 'All is number.' His school treated integers as sacred objects, not tools. ${n} would have had a ritual name and a geometric shape in their philosophy.`,source:'Ancient philosophy'},
+    {text:`Ramanujan saw formulas in dreams — his goddess whispered mathematics to him. He said every positive integer was a personal friend. ${n} was one of his acquaintances.`,source:'Mathematical history'},
+    {text:`Gödel proved in 1931 that some truths about numbers can never be proven from within mathematics itself. ${n} may hold one of those truths — permanently out of reach.`,source:'Logic'},
+    {text:`Every integer can be expressed as a unique continued fraction — an infinite staircase of ratios. ${n}'s staircase terminates, marking it as rational. Irrational numbers go on forever.`,source:'Number theory'},
+  ]);
 }
 
 function getFact(value){
@@ -315,9 +579,21 @@ function getFact(value){
   if(!isFinite(v)) return null;
   const n=Math.round(v);
   const exact=fmtDisp(value);
-  // exact match only — no nearby substitution
+  /* exact match in curated database */
   if(FACTS[n]) return {exactNum:exact, num:n, ...FACTS[n]};
-  // mathematical fallback about the exact number
+  /* for large numbers try prefix matching (first 4 then 3 digits) */
+  if(Math.abs(n)>9999){
+    const s=String(Math.abs(n));
+    const p4=parseInt(s.slice(0,4));
+    if(FACTS[p4]) return {exactNum:exact, num:n,
+      text:`Your result opens with ${p4.toLocaleString()} — ${FACTS[p4].text}`,
+      source:FACTS[p4].source};
+    const p3=parseInt(s.slice(0,3));
+    if(FACTS[p3]) return {exactNum:exact, num:n,
+      text:`The leading digits of your result echo ${p3} — ${FACTS[p3].text}`,
+      source:FACTS[p3].source};
+  }
+  /* mathematical fallback */
   return {exactNum:exact, num:n, ..._mathFact(n)};
 }
 

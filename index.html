@@ -1332,6 +1332,31 @@ function makeTube(pts,r,mat,seg=45){
   return m;
 }
 
+/* Update tube geometry buffers in-place — zero GC pressure.
+   Inspired by wiggle.three.tools spring-bone physics approach */
+function updateCableGeo(mesh){
+  const pts=mesh._physPts, S=mesh._tubeSeg, R=8, r=mesh._tubeR;
+  const curve=new THREE.CatmullRomCurve3(pts);
+  const frames=curve.computeFrenetFrames(S,false);
+  const posA=mesh.geometry.attributes.position;
+  const nrmA=mesh.geometry.attributes.normal;
+  let idx=0;
+  for(let i=0;i<=S;i++){
+    const P=curve.getPointAt(i/S);
+    const N=frames.normals[i], B=frames.binormals[i];
+    for(let j=0;j<=R;j++){
+      const v=j/R*Math.PI*2, sn=Math.sin(v), cs=-Math.cos(v);
+      const nx=cs*N.x+sn*B.x, ny=cs*N.y+sn*B.y, nz=cs*N.z+sn*B.z;
+      nrmA.setXYZ(idx, nx, ny, nz);
+      posA.setXYZ(idx, P.x+r*nx, P.y+r*ny, P.z+r*nz);
+      idx++;
+    }
+  }
+  posA.needsUpdate=true;
+  nrmA.needsUpdate=true;
+  mesh.geometry.computeBoundingSphere();
+}
+
 const cables=[]; /* store cable meshes for swaying animation */
 const plugs=[];  /* store plug groups – excluded from pivot rotation */
 
@@ -1642,6 +1667,12 @@ for (const c of cables) {
     new THREE.CatmullRomCurve3(newPts), c._tubeSeg, c._tubeR, 8, false
   );
   oldGeo.dispose();
+  /* ── Spring physics init (inspired by wiggle.three.tools) ── */
+  c._restPts = newPts;
+  c._physPts = newPts.map(p => p.clone());
+  c._vel     = newPts.map(() => new THREE.Vector3());
+  const n    = newPts.length;
+  c._freedom = newPts.map((_, i) => Math.pow(Math.sin(i/(n-1)*Math.PI), 2));
 }
 
 /* Phase 3 — Rebuild ribbon so it bridges the two rotated panels.
@@ -1676,6 +1707,21 @@ for (const c of cables) {
 }
 
 /* ═══════════════════════════════════════
+   CABLE SPRING PHYSICS (inspired by wiggle.three.tools)
+   Tracks calcGroup world-space acceleration and applies
+   inverse inertial forces on cable control points — cables
+   sway, lag, and bounce naturally when the calculator moves.
+═══════════════════════════════════════ */
+const _CS = 10;       // spring stiffness
+const _CD = 4.2;      // damping coefficient
+const _CI = 0.28;     // inertia reaction scale
+const _CG = 0.4;      // subtle local-space gravity sag
+const _CMD = 1.0;     // max displacement clamp
+let _cPrevWP = null;
+let _cPrevWV = new THREE.Vector3();
+const _cInvQ  = new THREE.Quaternion();
+
+/* ═══════════════════════════════════════
    KEY PRESS ANIMATIONS
 ═══════════════════════════════════════ */
 const pressMap = new Map();
@@ -1686,6 +1732,15 @@ let _pressDir=0;      // -1 left, +1 right — subtle tilt toward pressed key
 function triggerPressWeight(keyX){
   _pressWeight=1.0;
   _pressDir=keyX>0 ? 1 : keyX<0 ? -1 : 0;
+  /* Cable impulse — nudge mid-cable points downward & sideways on key press */
+  for(const c of cables){
+    for(let i=0;i<c._vel.length;i++){
+      const fr=c._freedom[i];
+      if(fr<0.05) continue;
+      c._vel[i].y -= 1.8 * fr;                        // downward bounce
+      c._vel[i].x += (keyX>0?0.6:-0.6) * fr * 0.5;   // slight sideways swing
+    }
+  }
 }
 
 function tickKeys(dt){
@@ -1858,12 +1913,48 @@ function animate(){
   calcGroup.rotation.y=Math.sin(t*.22)*.038;
   calcGroup.rotation.x=-40*Math.PI/180 + Math.sin(t*.48)*.022 + pw*.025;   // slight forward tilt
 
-  /* cable sway – very subtle, no rotation to avoid disconnecting from plugs */
-  for(let i=0;i<cables.length;i++){
-    const c=cables[i];
-    const f=.35+i*.14;
-    /* only tiny Y bob – no rotation that would swing endpoints away from plugs */
-    c.position.y=Math.sin(t*(f*1.25)+i*.9)*.006;
+  /* ── Cable spring physics (inspired by wiggle.three.tools) ── */
+  {
+    calcGroup.updateMatrixWorld(true);
+    const wP=new THREE.Vector3(); calcGroup.getWorldPosition(wP);
+    if(!_cPrevWP){ _cPrevWP=wP.clone(); _cPrevWV.set(0,0,0); }
+    const sDt=Math.max(dt,0.001);
+    const wV=wP.clone().sub(_cPrevWP).divideScalar(sDt);
+    const wA=wV.clone().sub(_cPrevWV).divideScalar(sDt);
+    _cPrevWP.copy(wP); _cPrevWV.copy(wV);
+    /* clamp acceleration (tab-switch / long frame → huge spike) */
+    if(wA.lengthSq()>2500) wA.setLength(50);
+    /* world accel → calcGroup local space */
+    calcGroup.getWorldQuaternion(_cInvQ).invert();
+    const lA=wA.applyQuaternion(_cInvQ);
+    const step=Math.min(sDt,0.033); /* cap physics step ~30fps for stability */
+
+    for(let ci=0;ci<cables.length;ci++){
+      const c=cables[ci];
+      for(let i=0;i<c._physPts.length;i++){
+        const fr=c._freedom[i];
+        if(fr<0.001) continue;
+        const rest=c._restPts[i], pos=c._physPts[i], vel=c._vel[i];
+        /* spring toward rest */
+        const dx=rest.x-pos.x, dy=rest.y-pos.y, dz=rest.z-pos.z;
+        /* force = spring + damping + inertia + gravity */
+        const fx=dx*_CS - vel.x*_CD - lA.x*_CI*fr;
+        const fy=dy*_CS - vel.y*_CD - lA.y*_CI*fr - _CG*fr;
+        const fz=dz*_CS - vel.z*_CD - lA.z*_CI*fr;
+        vel.x+=fx*step*fr; vel.y+=fy*step*fr; vel.z+=fz*step*fr;
+        pos.x+=vel.x*step; pos.y+=vel.y*step; pos.z+=vel.z*step;
+        /* clamp max displacement from rest */
+        const dSq=(pos.x-rest.x)**2+(pos.y-rest.y)**2+(pos.z-rest.z)**2;
+        if(dSq>_CMD*_CMD){
+          const s=_CMD/Math.sqrt(dSq);
+          pos.x=rest.x+(pos.x-rest.x)*s;
+          pos.y=rest.y+(pos.y-rest.y)*s;
+          pos.z=rest.z+(pos.z-rest.z)*s;
+          vel.multiplyScalar(0.5);
+        }
+      }
+      updateCableGeo(c);
+    }
   }
 
   /* glow pulse */
